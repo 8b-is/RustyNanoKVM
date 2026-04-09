@@ -2,6 +2,13 @@
 //!
 //! Standard USB HID keyboard scan codes and character mappings.
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
 /// Convert a character to its key code and modifier
 pub fn key_from_char(ch: char) -> Option<(u8, u8)> {
     match ch {
@@ -54,6 +61,72 @@ pub fn key_from_char(ch: char) -> Option<(u8, u8)> {
         '>' => Some((0x02, 0x37)),
         '?' => Some((0x02, 0x38)),
         _ => None,
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+/// USB HID key code type
+pub type KeyCode = u8;
+
+/// Key codes module
+impl KeyCode {
+    /// Convert a character to its key code and modifier
+    pub fn from_char(ch: char) -> Option<(u8, u8)> {
+        match ch {
+            'a'..='z' => Some((0, ch as u8 - b'a' + 0x04)),
+            'A'..='Z' => Some((0x02, ch as u8 - b'A' + 0x04)), // Shift + key
+            '1' => Some((0, 0x1E)),
+            '2' => Some((0, 0x1F)),
+            '3' => Some((0, 0x20)),
+            '4' => Some((0, 0x21)),
+            '5' => Some((0, 0x22)),
+            '6' => Some((0, 0x23)),
+            '7' => Some((0, 0x24)),
+            '8' => Some((0, 0x25)),
+            '9' => Some((0, 0x26)),
+            '0' => Some((0, 0x27)),
+            '\n' => Some((0, KEY_ENTER)),
+            '\t' => Some((0, KEY_TAB)),
+            ' ' => Some((0, KEY_SPACE)),
+            '-' => Some((0, 0x2D)),
+            '=' => Some((0, 0x2E)),
+            '[' => Some((0, 0x2F)),
+            ']' => Some((0, 0x30)),
+            '\\' => Some((0, 0x31)),
+            ';' => Some((0, 0x33)),
+            '\'' => Some((0, 0x34)),
+            '`' => Some((0, 0x35)),
+            ',' => Some((0, 0x36)),
+            '.' => Some((0, 0x37)),
+            '/' => Some((0, 0x38)),
+            // Shifted characters
+            '!' => Some((0x02, 0x1E)),
+            '@' => Some((0x02, 0x1F)),
+            '#' => Some((0x02, 0x20)),
+            '$' => Some((0x02, 0x21)),
+            '%' => Some((0x02, 0x22)),
+            '^' => Some((0x02, 0x23)),
+            '&' => Some((0x02, 0x24)),
+            '*' => Some((0x02, 0x25)),
+            '(' => Some((0x02, 0x26)),
+            ')' => Some((0x02, 0x27)),
+            '_' => Some((0x02, 0x2D)),
+            '+' => Some((0x02, 0x2E)),
+            '{' => Some((0x02, 0x2F)),
+            '}' => Some((0x02, 0x30)),
+            '|' => Some((0x02, 0x31)),
+            ':' => Some((0x02, 0x33)),
+            '"' => Some((0x02, 0x34)),
+            '~' => Some((0x02, 0x35)),
+            '<' => Some((0x02, 0x36)),
+            '>' => Some((0x02, 0x37)),
+            '?' => Some((0x02, 0x38)),
+            _ => None,
+        }
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 }
 
@@ -184,25 +257,85 @@ mod tests {
 
     #[test]
     fn test_from_char_lowercase() {
+<<<<<<< Updated upstream
         assert_eq!(key_from_char('a'), Some((0, 0x04)));
         assert_eq!(key_from_char('z'), Some((0, 0x1D)));
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        assert_eq!(key_from_char('a'), Some((0, 0x04)));
+        assert_eq!(key_from_char('z'), Some((0, 0x1D)));
+=======
+        assert_eq!(KeyCode::from_char('a'), Some((0, 0x04)));
+        assert_eq!(KeyCode::from_char('z'), Some((0, 0x1D)));
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        assert_eq!(key_from_char('a'), Some((0, 0x04)));
+        assert_eq!(key_from_char('z'), Some((0, 0x1D)));
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 
     #[test]
     fn test_from_char_uppercase() {
+<<<<<<< Updated upstream
         assert_eq!(key_from_char('A'), Some((0x02, 0x04)));
         assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        assert_eq!(key_from_char('A'), Some((0x02, 0x04)));
+        assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
+=======
+        assert_eq!(KeyCode::from_char('A'), Some((0x02, 0x04)));
+        assert_eq!(KeyCode::from_char('Z'), Some((0x02, 0x1D)));
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        assert_eq!(key_from_char('A'), Some((0x02, 0x04)));
+        assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 
     #[test]
     fn test_from_char_numbers() {
+<<<<<<< Updated upstream
         assert_eq!(key_from_char('1'), Some((0, 0x1E)));
         assert_eq!(key_from_char('0'), Some((0, 0x27)));
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        assert_eq!(key_from_char('1'), Some((0, 0x1E)));
+        assert_eq!(key_from_char('0'), Some((0, 0x27)));
+=======
+        assert_eq!(KeyCode::from_char('1'), Some((0, 0x1E)));
+        assert_eq!(KeyCode::from_char('0'), Some((0, 0x27)));
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        assert_eq!(key_from_char('1'), Some((0, 0x1E)));
+        assert_eq!(key_from_char('0'), Some((0, 0x27)));
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 
     #[test]
     fn test_from_char_symbols() {
+<<<<<<< Updated upstream
         assert_eq!(key_from_char('!'), Some((0x02, 0x1E)));
         assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        assert_eq!(key_from_char('!'), Some((0x02, 0x1E)));
+        assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
+=======
+        assert_eq!(KeyCode::from_char('!'), Some((0x02, 0x1E)));
+        assert_eq!(KeyCode::from_char('@'), Some((0x02, 0x1F)));
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        assert_eq!(key_from_char('!'), Some((0x02, 0x1E)));
+        assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 }

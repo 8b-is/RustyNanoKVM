@@ -6,6 +6,18 @@ use tracing::debug;
 
 use nanokvm_core::Result;
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+use crate::hid::Hid;
+use crate::keycodes::KeyCode;
+
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
 /// Keyboard report size
 const KEYBOARD_REPORT_SIZE: usize = 8;
 
@@ -20,14 +32,35 @@ impl Keyboard {
     pub fn press(modifier: u8, keys: &[u8]) -> Result<()> {
         let report = Self::build_report(modifier, keys);
         debug!("Keyboard press: modifier={:#04x}, keys={:?}", modifier, keys);
+<<<<<<< Updated upstream
         crate::hid::Hid::instance().write_keyboard(&report)
+=======
+<<<<<<< HEAD
+        Hid::instance().write_keyboard(&report)
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        crate::hid::Hid::instance().write_keyboard(&report)
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 
     /// Release all keys
     pub fn release() -> Result<()> {
         let report = [0u8; KEYBOARD_REPORT_SIZE];
         debug!("Keyboard release");
+<<<<<<< Updated upstream
         crate::hid::Hid::instance().write_keyboard(&report)
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        crate::hid::Hid::instance().write_keyboard(&report)
+=======
+        Hid::instance().write_keyboard(&report)
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        crate::hid::Hid::instance().write_keyboard(&report)
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     }
 
     /// Send a key press and release (tap)
@@ -39,7 +72,19 @@ impl Keyboard {
     /// Type a string by converting characters to key codes
     pub fn type_string(text: &str) -> Result<()> {
         for ch in text.chars() {
+<<<<<<< Updated upstream
             if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+            if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
+=======
+            if let Some((modifier, key)) = KeyCode::from_char(ch) {
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+            if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
                 Self::tap(modifier, key)?;
                 // Small delay between keystrokes would be handled by caller
             }

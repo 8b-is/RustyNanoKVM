@@ -2,10 +2,27 @@
 //!
 //! Supports SSD1306-based 128x64 OLED displays over I2C.
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 use tracing::{debug, info};
 
 use nanokvm_core::Result;
 
+<<<<<<< Updated upstream
+=======
+use crate::i2c::{I2c, addresses};
+=======
+use tracing::{debug, error, info};
+=======
+use tracing::{debug, info};
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+
+use nanokvm_core::Result;
+
+>>>>>>> Stashed changes
 use crate::i2c::{addresses, I2c};
 
 /// OLED display width
@@ -249,9 +266,26 @@ impl OledDisplay {
             (self.height / 8 - 1) as u8,
         ])?;
 
+<<<<<<< Updated upstream
         // Copy framebuffer to send (to avoid borrowing issues)
         let data = self.framebuffer;
         self.send_data(&data)?;
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+        // Copy framebuffer to send (to avoid borrowing issues)
+        let data = self.framebuffer;
+        self.send_data(&data)?;
+=======
+        // Send framebuffer data
+        self.send_data(&self.framebuffer)?;
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        // Copy framebuffer to send (to avoid borrowing issues)
+        let data = self.framebuffer;
+        self.send_data(&data)?;
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
         Ok(())
     }
 

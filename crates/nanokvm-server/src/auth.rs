@@ -6,13 +6,39 @@ use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use argon2::{
+<<<<<<< Updated upstream
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+    Argon2,
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use tracing::{debug, info, warn};
+=======
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+=======
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
     Argon2,
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+<<<<<<< Updated upstream
 use tracing::{debug, info, warn};
+=======
+<<<<<<< HEAD
+use tracing::{debug, error, info, warn};
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+use tracing::{debug, info, warn};
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
 use uuid::Uuid;
 
 use nanokvm_core::{Config, Error, Result};
@@ -150,11 +176,29 @@ impl AuthManager {
 
     /// Hash a password using Argon2
     fn hash_password(&self, password: &str) -> Result<String> {
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
         // Generate a random salt using UUID
         let salt_string = Uuid::new_v4().to_string().replace("-", "");
         let salt = SaltString::from_b64(&salt_string[..22])
             .map_err(|e| Error::auth(format!("Salt generation failed: {}", e)))?;
+<<<<<<< Updated upstream
         
+=======
+<<<<<<< HEAD
+
+=======
+        let salt = SaltString::generate(&mut OsRng);
+>>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
+=======
+        
+>>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+>>>>>>> Stashed changes
         let argon2 = Argon2::default();
 
         argon2
