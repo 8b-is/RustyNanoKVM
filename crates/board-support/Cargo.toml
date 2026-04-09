@@ -1,0 +1,24 @@
+[package]
+name = "board-support"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Board support package for NanoKVM hardware (SG2002)"
+
+[dependencies]
+nanokvm-core = { path = "../nanokvm-core" }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+nix = { workspace = true }
+memmap2 = { workspace = true }
+qrcode = { workspace = true }
+image = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
+
+[features]
+default = []
+mock = []  # Enable mock implementations for testing

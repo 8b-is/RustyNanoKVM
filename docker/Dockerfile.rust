@@ -1,0 +1,47 @@
+# Rust builder Dockerfile for NanoKVM
+# Cross-compilation for RISC-V SG2002 target
+
+FROM ubuntu:24.04 AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Add RISC-V target
+RUN rustup target add riscv64gc-unknown-linux-musl
+
+# Install RISC-V cross-compiler
+RUN apt-get update && apt-get install -y \
+    gcc-riscv64-linux-gnu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create workspace
+WORKDIR /workspace
+
+# Copy source
+COPY . .
+
+# Build
+RUN cargo build --release
+
+# Runtime image
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/target/release/nanokvm-server /usr/local/bin/
+
+EXPOSE 80
+EXPOSE 443
+
+CMD ["nanokvm-server"]

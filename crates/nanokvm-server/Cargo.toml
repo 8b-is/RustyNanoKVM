@@ -1,0 +1,58 @@
+[package]
+name = "nanokvm-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "NanoKVM Server - HTTP/WebSocket API server"
+
+[[bin]]
+name = "nanokvm-server"
+path = "src/main.rs"
+
+[dependencies]
+nanokvm-core = { path = "../nanokvm-core" }
+nanokvm-hid = { path = "../nanokvm-hid" }
+nanokvm-vision = { path = "../nanokvm-vision" }
+board-support = { path = "../board-support" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Web framework
+axum = { workspace = true }
+axum-extra = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Authentication
+jsonwebtoken = { workspace = true }
+argon2 = { workspace = true }
+uuid = { workspace = true }
+
+# Crypto
+sha2 = { workspace = true }
+rand = { workspace = true }
+
+# Utilities
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+bytes = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }

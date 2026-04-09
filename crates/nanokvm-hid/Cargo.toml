@@ -1,0 +1,17 @@
+[package]
+name = "nanokvm-hid"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "HID (Human Interface Device) emulation for NanoKVM"
+
+[dependencies]
+nanokvm-core = { path = "../nanokvm-core" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }

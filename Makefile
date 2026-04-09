@@ -1,97 +1,144 @@
-# Makefile for NanoKVM Project
+# Makefile for NanoKVM Project (Rust Edition)
+#
+# This Makefile provides build, test, and management commands for the
+# NanoKVM Rust workspace.
 
 # Configuration
-IMAGE_NAME := nanokvm-builder
+CARGO := cargo
+IMAGE_NAME := nanokvm-rust-builder
+RISCV_TARGET := riscv64gc-unknown-linux-musl
 UID := $(shell id -u)
 GID := $(shell id -g)
 PWD := $(shell pwd)
 
-# Docker run common parameters
-DOCKER_RUN_BASE := docker run -e UID=$(UID) -e GID=$(GID) -v $(PWD):/home/build/NanoKVM --rm
+# Docker run parameters
+DOCKER_RUN := docker run -e UID=$(UID) -e GID=$(GID) -v $(PWD):/workspace -w /workspace --rm
 
-# Build commands
-GO_BUILD_CMD := cd /home/build/NanoKVM/server && go mod tidy && CGO_ENABLED=1 GOOS=linux GOARCH=riscv64 CC=riscv64-unknown-linux-musl-gcc CGO_CFLAGS="-mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d" go build
-SUPPORT_BUILD_CMD := . ./home/build/MaixCDK/bin/activate && cd /home/build/NanoKVM/support/sg2002 && ./build kvm_system && ./build kvm_system add_to_kvmapp
-
-.PHONY: help check-root builder-image rebuild-image check-image shell app support all clean
+.PHONY: help all build release test lint fmt clean docker-build check-root \
+        dev run version info install-tools
 
 # Default target
-all: app support
+all: build
 
 # Help target
 help:
-	@echo "NanoKVM Build System"
+	@echo "NanoKVM Build System (Rust Edition)"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  help          - Show this help message"
-	@echo "  check-image   - Check builder Docker image and show versions"
-	@echo "  builder-image - Build Docker image if not exists"
-	@echo "  rebuild-image - Force rebuild Docker image"
-	@echo "  shell         - Enter interactive builder environment"
-	@echo "  app           - Build Go application server"
-	@echo "  support       - Build hardware support libraries"
-	@echo "  all           - Build both app and support (default)"
+	@echo "Build Commands:"
+	@echo "  build         - Build debug version (native)"
+	@echo "  release       - Build release version (native)"
+	@echo "  docker-build  - Build release for RISC-V using Docker"
 	@echo "  clean         - Clean build artifacts"
 	@echo ""
-	@echo "Prerequisites:"
-	@echo "  - Docker must be installed and running"
-	@echo "  - Must not run as root user"
+	@echo "Development Commands:"
+	@echo "  dev           - Run in development mode"
+	@echo "  run           - Run the server"
+	@echo "  test          - Run all tests"
+	@echo "  lint          - Run clippy lints"
+	@echo "  fmt           - Format code"
+	@echo ""
+	@echo "Version Commands:"
+	@echo "  version       - Show current version"
+	@echo ""
+	@echo "Info Commands:"
+	@echo "  info          - Show project information"
+	@echo "  install-tools - Install development tools"
+	@echo ""
+	@echo "Or use: ./scripts/manage.sh <command>"
 
-# Security check - prevent running as root
-check-root:
-	@if [ "$$(id -u)" -eq 0 ]; then \
-		echo "Can't run as root"; \
-		exit 1; \
-	fi
+# Build debug version
+build:
+	@echo "Building NanoKVM (debug)..."
+	$(CARGO) build --workspace
 
-# Check if builder image exists and show versions
-check-image: check-root
-	@echo "Checking builder image..."
-	@echo "Golang version: " && \
-		docker run --rm -i $(IMAGE_NAME) go version && \
-		echo "" && \
-		echo "Host-tools version:" && \
-		docker run --rm -i $(IMAGE_NAME) riscv64-unknown-linux-musl-gcc -v && \
-		echo ""
+# Build release version
+release:
+	@echo "Building NanoKVM (release)..."
+	$(CARGO) build --release --workspace
 
-# Build Docker image if it doesn't exist
-builder-image: check-root
+# Build for RISC-V target using Docker
+docker-build: check-root
+	@echo "Building for RISC-V using Docker..."
 	@if ! docker image inspect $(IMAGE_NAME) >/dev/null 2>&1; then \
 		echo "Building Docker image..."; \
-		docker build -t $(IMAGE_NAME) -f docker/Dockerfile ./; \
+		docker build -t $(IMAGE_NAME) -f docker/Dockerfile.rust ./; \
+	fi
+	$(DOCKER_RUN) $(IMAGE_NAME) cargo build --release --target $(RISCV_TARGET)
+
+# Run the server (debug mode)
+run:
+	@echo "Running NanoKVM server..."
+	$(CARGO) run --bin nanokvm-server
+
+# Development mode with hot reload (requires cargo-watch)
+dev:
+	@echo "Starting development server..."
+	@if command -v cargo-watch >/dev/null 2>&1; then \
+		cargo watch -x "run --bin nanokvm-server"; \
 	else \
-		echo "Docker image $(IMAGE_NAME) already exists."; \
+		echo "cargo-watch not installed. Installing..."; \
+		cargo install cargo-watch; \
+		cargo watch -x "run --bin nanokvm-server"; \
 	fi
 
-# Force rebuild Docker image
-rebuild-image: check-root
-	@echo "Force rebuilding Docker image..."
-	@docker build --no-cache -t $(IMAGE_NAME) -f docker/Dockerfile ./
+# Run all tests
+test:
+	@echo "Running tests..."
+	$(CARGO) test --workspace
 
-# Enter interactive shell (equivalent to build.sh with no arguments)
-shell: check-root builder-image
-	@echo "Switching into builder..."
-	@$(DOCKER_RUN_BASE) -it $(IMAGE_NAME) /bin/bash -c ". ./home/build/MaixCDK/bin/activate && cd /home/build/NanoKVM ; exec bash"
+# Run clippy lints
+lint:
+	@echo "Running lints..."
+	$(CARGO) fmt --check
+	$(CARGO) clippy --workspace -- -D warnings
 
-# Build Go application
-app: check-root builder-image
-	@echo "Building app..."
-	@$(DOCKER_RUN_BASE) -it $(IMAGE_NAME) /bin/bash -c '$(GO_BUILD_CMD)'
-
-# Build hardware support libraries
-support: check-root builder-image
-	@echo "Building support..."
-	@$(DOCKER_RUN_BASE) -it $(IMAGE_NAME) /bin/bash -c '$(SUPPORT_BUILD_CMD)'
+# Format code
+fmt:
+	@echo "Formatting code..."
+	$(CARGO) fmt --all
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
+	$(CARGO) clean
+	@# Clean legacy artifacts
 	@if [ -f server/NanoKVM-Server ]; then \
 		rm -f server/NanoKVM-Server; \
-		echo "Removed server/NanoKVM-Server"; \
+		echo "Removed legacy server/NanoKVM-Server"; \
 	fi
 	@if [ -d support/sg2002/build ]; then \
 		rm -rf support/sg2002/build; \
 		echo "Removed support/sg2002/build"; \
 	fi
 	@echo "Clean completed."
+
+# Show version
+version:
+	@grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/NanoKVM v\1/'
+
+# Show project info
+info:
+	@echo "NanoKVM Project Info"
+	@echo "===================="
+	@./scripts/manage.sh info
+
+# Security check - prevent running as root
+check-root:
+	@if [ "$$(id -u)" -eq 0 ]; then \
+		echo "Error: Cannot run as root"; \
+		exit 1; \
+	fi
+
+# Install development tools
+install-tools:
+	@echo "Installing development tools..."
+	cargo install cargo-watch
+	cargo install cargo-edit
+	cargo install cargo-audit
+	@echo "Tools installed."
+
+# Legacy compatibility targets
+app: build
+support:
+	@echo "Support libraries are now built as part of the Rust workspace"
+	@echo "See crates/board-support/"

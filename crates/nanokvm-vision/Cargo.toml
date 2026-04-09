@@ -1,0 +1,27 @@
+[package]
+name = "nanokvm-vision"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Video capture and streaming for NanoKVM"
+
+[dependencies]
+nanokvm-core = { path = "../nanokvm-core" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+bytes = { workspace = true }
+
+[build-dependencies]
+# For FFI bindings to libkvm
+# bindgen = "0.70" # Uncomment when needed
+
+[dev-dependencies]
+rstest = { workspace = true }
+
+[features]
+default = []
+mock = []  # Enable mock implementations for testing
+ffi = []   # Enable FFI bindings to vendor SDK

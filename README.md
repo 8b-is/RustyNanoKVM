@@ -1,19 +1,25 @@
-# NanoKVM
+# RustyNanoKVM
 
 <div align="center">
   <br>
   <img src="https://wiki.sipeed.com/hardware/assets/NanoKVM/introduce/NanoKVM_3.png" alt="NanoKVM" style="margin: 20px 0;">
   <h3>
+    <strong>🦀 Rust-Powered IP-KVM Solution</strong>
+  </h3>
+  <p>
+    Version: <strong>0.1.0</strong>
+  </p>
+  <p>
     <a href="https://wiki.sipeed.com/hardware/en/kvm/NanoKVM/introduction.html">🚀 Quick Start</a>
      |
     <a href="https://cn.dl.sipeed.com/shareURL/KVM/nanoKVM">🛠️ Hardware Details</a>
      |
     <a href="https://github.com/sipeed/NanoKVM/releases/latest">💾 Firmware Releases</a>
-  </h3>
+  </p>
   <br>
 </div>
 
-> For the recent discussion regarding the **built-in microphone**, please check [Issue #693](https://github.com/sipeed/NanoKVM/issues/693).
+> **Note**: This is a complete Rust rewrite of the NanoKVM project. The original Go/TypeScript/C++ implementation has been converted to pure Rust for improved performance, safety, and maintainability.
 
 ## 🌟 What is NanoKVM?
 
@@ -67,19 +73,80 @@ We offer several NanoKVM versions to suit your needs:
 | Power Input        | USB-C or PoE                          | USB-C                             | USB-C                              | USB-C                               |
 | Dimensions         | 65x65x26mm                            | 40x36x36mm                        | 80x60x17.5mm                       | 60x43x(24~31)mm                     |
 
-## 📂 Project Structure
+## 📂 Project Structure (Rust Workspace)
 
-``` shell
-├── kvmapp          # APP update package
-│   ├── jpg_stream  # Legacy support for direct updates from older versions
-│   ├── kvm_new_app # Triggers components for kvm_system updates
-│   ├── kvm_system  # Core KVM application
-│   ├── server      # Front-end and back-end integration
-│   └── system      # Essential system components
-├── web             # NanoKVM Front-end (UI)
-├── server          # NanoKVM Back-end (Service)
-├── support         # Auxiliary modules (Image subsystem, status, updates, OLED, HID, etc.)
-├── ...
+```shell
+├── crates/                 # Rust workspace crates
+│   ├── nanokvm-server/     # Main HTTP/WebSocket server (Axum)
+│   ├── nanokvm-core/       # Core types, config, error handling
+│   ├── nanokvm-hid/        # HID emulation (keyboard, mouse)
+│   ├── nanokvm-vision/     # Video capture and streaming
+│   └── board-support/      # Board support (GPIO, I2C, OLED, ATX)
+├── scripts/
+│   └── manage.sh           # Build/test/version management
+├── docker/
+│   └── Dockerfile.rust     # Docker build environment
+├── web/                    # Web frontend (to be ported)
+├── Cargo.toml              # Workspace configuration
+└── Makefile                # Make targets
+```
+
+## 🔧 Building
+
+### Prerequisites
+
+- Rust 1.85+ (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
+- For cross-compilation: Docker or RISC-V toolchain
+
+### Quick Start
+
+```bash
+# Build (debug)
+make build
+
+# Build (release)
+make release
+
+# Run tests
+make test
+
+# Format and lint
+make fmt
+make lint
+
+# Run the server
+make run
+```
+
+### Using manage.sh
+
+```bash
+# Build commands
+./scripts/manage.sh build              # Debug build
+./scripts/manage.sh build release      # Release build
+./scripts/manage.sh docker-build       # Docker cross-compile
+
+# Development
+./scripts/manage.sh dev                # Hot-reload development
+./scripts/manage.sh test               # Run tests
+./scripts/manage.sh lint               # Check formatting + clippy
+
+# Version management
+./scripts/manage.sh version            # Show version
+./scripts/manage.sh bump patch         # Bump patch version
+./scripts/manage.sh bump minor         # Bump minor version
+./scripts/manage.sh set-version 1.0.0  # Set specific version
+```
+
+### Cross-compilation for RISC-V (SG2002)
+
+```bash
+# Using Docker (recommended)
+make docker-build
+
+# Or manually with the RISC-V toolchain
+rustup target add riscv64gc-unknown-linux-musl
+cargo build --release --target riscv64gc-unknown-linux-musl
 ```
 
 ## 🔩 Hardware Platform (NanoKVM Cube/PCIe)

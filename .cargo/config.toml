@@ -1,0 +1,29 @@
+# Cargo configuration for NanoKVM
+# Cross-compilation settings for RISC-V SG2002 target
+
+[build]
+# Default target for development (native)
+# Uncomment for cross-compilation:
+# target = "riscv64gc-unknown-linux-musl"
+
+[target.riscv64gc-unknown-linux-musl]
+# Use the cross-compilation toolchain
+linker = "riscv64-unknown-linux-musl-gcc"
+
+# Compiler flags for SG2002 (RISC-V C906)
+rustflags = [
+    "-C", "target-cpu=generic-rv64",
+    "-C", "link-arg=-mcpu=c906fdv",
+    "-C", "link-arg=-march=rv64imafdcv0p7xthead",
+    "-C", "link-arg=-mcmodel=medany",
+    "-C", "link-arg=-mabi=lp64d",
+]
+
+[target.riscv64gc-unknown-linux-gnu]
+linker = "riscv64-unknown-linux-gnu-gcc"
+
+# Alias for common commands
+[alias]
+br = "build --release"
+dev = "build"
+test-all = "test --workspace"
