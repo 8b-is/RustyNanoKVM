@@ -6,7 +6,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::io::AsRawFd;
 
-use tracing::{debug, error};
+use nix::libc;
+use tracing::debug;
 
 use nanokvm_core::{Error, Result};
 

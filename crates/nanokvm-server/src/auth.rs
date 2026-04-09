@@ -6,13 +6,13 @@ use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 use nanokvm_core::{Config, Error, Result};
@@ -150,7 +150,11 @@ impl AuthManager {
 
     /// Hash a password using Argon2
     fn hash_password(&self, password: &str) -> Result<String> {
-        let salt = SaltString::generate(&mut OsRng);
+        // Generate a random salt using UUID
+        let salt_string = Uuid::new_v4().to_string().replace("-", "");
+        let salt = SaltString::from_b64(&salt_string[..22])
+            .map_err(|e| Error::auth(format!("Salt generation failed: {}", e)))?;
+        
         let argon2 = Argon2::default();
 
         argon2

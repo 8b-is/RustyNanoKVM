@@ -2,9 +2,9 @@
 //!
 //! Supports SSD1306-based 128x64 OLED displays over I2C.
 
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
-use nanokvm_core::{Error, Result};
+use nanokvm_core::Result;
 
 use crate::i2c::{addresses, I2c};
 
@@ -249,8 +249,9 @@ impl OledDisplay {
             (self.height / 8 - 1) as u8,
         ])?;
 
-        // Send framebuffer data
-        self.send_data(&self.framebuffer)?;
+        // Copy framebuffer to send (to avoid borrowing issues)
+        let data = self.framebuffer;
+        self.send_data(&data)?;
         Ok(())
     }
 

@@ -2,64 +2,58 @@
 //!
 //! Standard USB HID keyboard scan codes and character mappings.
 
-/// USB HID key code type
-pub type KeyCode = u8;
-
-/// Key codes module
-impl KeyCode {
-    /// Convert a character to its key code and modifier
-    pub fn from_char(ch: char) -> Option<(u8, u8)> {
-        match ch {
-            'a'..='z' => Some((0, ch as u8 - b'a' + 0x04)),
-            'A'..='Z' => Some((0x02, ch as u8 - b'A' + 0x04)), // Shift + key
-            '1' => Some((0, 0x1E)),
-            '2' => Some((0, 0x1F)),
-            '3' => Some((0, 0x20)),
-            '4' => Some((0, 0x21)),
-            '5' => Some((0, 0x22)),
-            '6' => Some((0, 0x23)),
-            '7' => Some((0, 0x24)),
-            '8' => Some((0, 0x25)),
-            '9' => Some((0, 0x26)),
-            '0' => Some((0, 0x27)),
-            '\n' => Some((0, KEY_ENTER)),
-            '\t' => Some((0, KEY_TAB)),
-            ' ' => Some((0, KEY_SPACE)),
-            '-' => Some((0, 0x2D)),
-            '=' => Some((0, 0x2E)),
-            '[' => Some((0, 0x2F)),
-            ']' => Some((0, 0x30)),
-            '\\' => Some((0, 0x31)),
-            ';' => Some((0, 0x33)),
-            '\'' => Some((0, 0x34)),
-            '`' => Some((0, 0x35)),
-            ',' => Some((0, 0x36)),
-            '.' => Some((0, 0x37)),
-            '/' => Some((0, 0x38)),
-            // Shifted characters
-            '!' => Some((0x02, 0x1E)),
-            '@' => Some((0x02, 0x1F)),
-            '#' => Some((0x02, 0x20)),
-            '$' => Some((0x02, 0x21)),
-            '%' => Some((0x02, 0x22)),
-            '^' => Some((0x02, 0x23)),
-            '&' => Some((0x02, 0x24)),
-            '*' => Some((0x02, 0x25)),
-            '(' => Some((0x02, 0x26)),
-            ')' => Some((0x02, 0x27)),
-            '_' => Some((0x02, 0x2D)),
-            '+' => Some((0x02, 0x2E)),
-            '{' => Some((0x02, 0x2F)),
-            '}' => Some((0x02, 0x30)),
-            '|' => Some((0x02, 0x31)),
-            ':' => Some((0x02, 0x33)),
-            '"' => Some((0x02, 0x34)),
-            '~' => Some((0x02, 0x35)),
-            '<' => Some((0x02, 0x36)),
-            '>' => Some((0x02, 0x37)),
-            '?' => Some((0x02, 0x38)),
-            _ => None,
-        }
+/// Convert a character to its key code and modifier
+pub fn key_from_char(ch: char) -> Option<(u8, u8)> {
+    match ch {
+        'a'..='z' => Some((0, ch as u8 - b'a' + 0x04)),
+        'A'..='Z' => Some((0x02, ch as u8 - b'A' + 0x04)), // Shift + key
+        '1' => Some((0, 0x1E)),
+        '2' => Some((0, 0x1F)),
+        '3' => Some((0, 0x20)),
+        '4' => Some((0, 0x21)),
+        '5' => Some((0, 0x22)),
+        '6' => Some((0, 0x23)),
+        '7' => Some((0, 0x24)),
+        '8' => Some((0, 0x25)),
+        '9' => Some((0, 0x26)),
+        '0' => Some((0, 0x27)),
+        '\n' => Some((0, KEY_ENTER)),
+        '\t' => Some((0, KEY_TAB)),
+        ' ' => Some((0, KEY_SPACE)),
+        '-' => Some((0, 0x2D)),
+        '=' => Some((0, 0x2E)),
+        '[' => Some((0, 0x2F)),
+        ']' => Some((0, 0x30)),
+        '\\' => Some((0, 0x31)),
+        ';' => Some((0, 0x33)),
+        '\'' => Some((0, 0x34)),
+        '`' => Some((0, 0x35)),
+        ',' => Some((0, 0x36)),
+        '.' => Some((0, 0x37)),
+        '/' => Some((0, 0x38)),
+        // Shifted characters
+        '!' => Some((0x02, 0x1E)),
+        '@' => Some((0x02, 0x1F)),
+        '#' => Some((0x02, 0x20)),
+        '$' => Some((0x02, 0x21)),
+        '%' => Some((0x02, 0x22)),
+        '^' => Some((0x02, 0x23)),
+        '&' => Some((0x02, 0x24)),
+        '*' => Some((0x02, 0x25)),
+        '(' => Some((0x02, 0x26)),
+        ')' => Some((0x02, 0x27)),
+        '_' => Some((0x02, 0x2D)),
+        '+' => Some((0x02, 0x2E)),
+        '{' => Some((0x02, 0x2F)),
+        '}' => Some((0x02, 0x30)),
+        '|' => Some((0x02, 0x31)),
+        ':' => Some((0x02, 0x33)),
+        '"' => Some((0x02, 0x34)),
+        '~' => Some((0x02, 0x35)),
+        '<' => Some((0x02, 0x36)),
+        '>' => Some((0x02, 0x37)),
+        '?' => Some((0x02, 0x38)),
+        _ => None,
     }
 }
 
@@ -190,25 +184,25 @@ mod tests {
 
     #[test]
     fn test_from_char_lowercase() {
-        assert_eq!(KeyCode::from_char('a'), Some((0, 0x04)));
-        assert_eq!(KeyCode::from_char('z'), Some((0, 0x1D)));
+        assert_eq!(key_from_char('a'), Some((0, 0x04)));
+        assert_eq!(key_from_char('z'), Some((0, 0x1D)));
     }
 
     #[test]
     fn test_from_char_uppercase() {
-        assert_eq!(KeyCode::from_char('A'), Some((0x02, 0x04)));
-        assert_eq!(KeyCode::from_char('Z'), Some((0x02, 0x1D)));
+        assert_eq!(key_from_char('A'), Some((0x02, 0x04)));
+        assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
     }
 
     #[test]
     fn test_from_char_numbers() {
-        assert_eq!(KeyCode::from_char('1'), Some((0, 0x1E)));
-        assert_eq!(KeyCode::from_char('0'), Some((0, 0x27)));
+        assert_eq!(key_from_char('1'), Some((0, 0x1E)));
+        assert_eq!(key_from_char('0'), Some((0, 0x27)));
     }
 
     #[test]
     fn test_from_char_symbols() {
-        assert_eq!(KeyCode::from_char('!'), Some((0x02, 0x1E)));
-        assert_eq!(KeyCode::from_char('@'), Some((0x02, 0x1F)));
+        assert_eq!(key_from_char('!'), Some((0x02, 0x1E)));
+        assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
     }
 }

@@ -6,9 +6,6 @@ use tracing::debug;
 
 use nanokvm_core::Result;
 
-use crate::hid::Hid;
-use crate::keycodes::KeyCode;
-
 /// Keyboard report size
 const KEYBOARD_REPORT_SIZE: usize = 8;
 
@@ -23,14 +20,14 @@ impl Keyboard {
     pub fn press(modifier: u8, keys: &[u8]) -> Result<()> {
         let report = Self::build_report(modifier, keys);
         debug!("Keyboard press: modifier={:#04x}, keys={:?}", modifier, keys);
-        Hid::instance().write_keyboard(&report)
+        crate::hid::Hid::instance().write_keyboard(&report)
     }
 
     /// Release all keys
     pub fn release() -> Result<()> {
         let report = [0u8; KEYBOARD_REPORT_SIZE];
         debug!("Keyboard release");
-        Hid::instance().write_keyboard(&report)
+        crate::hid::Hid::instance().write_keyboard(&report)
     }
 
     /// Send a key press and release (tap)
@@ -42,7 +39,7 @@ impl Keyboard {
     /// Type a string by converting characters to key codes
     pub fn type_string(text: &str) -> Result<()> {
         for ch in text.chars() {
-            if let Some((modifier, key)) = KeyCode::from_char(ch) {
+            if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
                 Self::tap(modifier, key)?;
                 // Small delay between keystrokes would be handled by caller
             }

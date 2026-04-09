@@ -7,11 +7,11 @@ use std::thread;
 use std::time::Duration;
 
 use parking_lot::Mutex;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use nanokvm_core::{Error, Result};
 
-use crate::gpio::{Direction, Gpio, Value};
+use crate::gpio::{Gpio, Value};
 
 /// Default power button press duration (ms)
 const POWER_PRESS_DURATION: u64 = 200;

@@ -4,7 +4,6 @@
 
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::os::unix::io::AsRawFd;
 use std::sync::OnceLock;
 use std::time::Duration;
 
@@ -156,30 +155,9 @@ impl Hid {
     }
 
     #[cfg(unix)]
-    fn set_write_timeout(file: &File, timeout: Duration) -> Result<()> {
-        use std::os::unix::io::AsRawFd;
-
-        let fd = file.as_raw_fd();
-        let tv = libc::timeval {
-            tv_sec: timeout.as_secs() as libc::time_t,
-            tv_usec: timeout.subsec_micros() as libc::suseconds_t,
-        };
-
-        let result = unsafe {
-            libc::setsockopt(
-                fd,
-                libc::SOL_SOCKET,
-                libc::SO_SNDTIMEO,
-                &tv as *const _ as *const libc::c_void,
-                std::mem::size_of::<libc::timeval>() as libc::socklen_t,
-            )
-        };
-
-        if result < 0 {
-            // Socket options may not work on device files, that's okay
-            debug!("Could not set write timeout on HID device");
-        }
-
+    fn set_write_timeout(_file: &File, _timeout: Duration) -> Result<()> {
+        // Note: Setting socket options on device files may not work
+        // The timeout is handled at the application level
         Ok(())
     }
 

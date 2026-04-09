@@ -3,13 +3,13 @@
 //! Provides GPIO access using the sysfs interface and memory-mapped I/O
 //! for high-performance operations.
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 
-use nanokvm_core::{Error, Result};
+use nanokvm_core::Result;
 
 /// GPIO sysfs base path
 const GPIO_SYSFS_PATH: &str = "/sys/class/gpio";
