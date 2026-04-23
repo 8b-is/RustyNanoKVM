@@ -12,6 +12,7 @@ use argon2::{
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
@@ -25,6 +26,9 @@ use tracing::{debug, info, warn};
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -35,8 +39,11 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 use tracing::{debug, info, warn};
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 <<<<<<< HEAD
@@ -46,6 +53,9 @@ use tracing::{debug, error, info, warn};
 use tracing::{debug, info, warn};
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -193,6 +203,9 @@ impl AuthManager {
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -202,8 +215,11 @@ impl AuthManager {
             .map_err(|e| Error::auth(format!("Salt generation failed: {}", e)))?;
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 <<<<<<< HEAD
@@ -215,6 +231,9 @@ impl AuthManager {
         
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

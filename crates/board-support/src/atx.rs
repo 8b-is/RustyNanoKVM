@@ -12,6 +12,9 @@ use parking_lot::Mutex;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -37,6 +40,9 @@ use nanokvm_core::{Error, Result};
 use crate::gpio::{Gpio, Value};
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

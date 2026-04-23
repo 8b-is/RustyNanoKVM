@@ -9,6 +9,9 @@
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -66,7 +69,10 @@ pub fn key_from_char(ch: char) -> Option<(u8, u8)> {
         _ => None,
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 <<<<<<< HEAD
@@ -133,6 +139,9 @@ impl KeyCode {
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -273,6 +282,7 @@ mod tests {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         assert_eq!(key_from_char('a'), Some((0, 0x04)));
         assert_eq!(key_from_char('z'), Some((0, 0x1D)));
 =======
@@ -284,6 +294,9 @@ mod tests {
         assert_eq!(key_from_char('z'), Some((0, 0x1D)));
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -298,6 +311,7 @@ mod tests {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         assert_eq!(key_from_char('A'), Some((0x02, 0x04)));
         assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
 =======
@@ -309,6 +323,9 @@ mod tests {
         assert_eq!(key_from_char('Z'), Some((0x02, 0x1D)));
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -323,6 +340,7 @@ mod tests {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         assert_eq!(key_from_char('1'), Some((0, 0x1E)));
         assert_eq!(key_from_char('0'), Some((0, 0x27)));
 =======
@@ -334,6 +352,9 @@ mod tests {
         assert_eq!(key_from_char('0'), Some((0, 0x27)));
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -348,6 +369,7 @@ mod tests {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         assert_eq!(key_from_char('!'), Some((0x02, 0x1E)));
         assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
 =======
@@ -359,6 +381,9 @@ mod tests {
         assert_eq!(key_from_char('@'), Some((0x02, 0x1F)));
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

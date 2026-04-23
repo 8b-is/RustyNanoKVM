@@ -9,12 +9,16 @@ use std::io::Write;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 use std::os::unix::io::AsRawFd;
 >>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -177,6 +181,7 @@ impl Hid {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     fn set_write_timeout(_file: &File, _timeout: Duration) -> Result<()> {
         // Note: Setting socket options on device files may not work
         // The timeout is handled at the application level
@@ -212,6 +217,9 @@ impl Hid {
         // The timeout is handled at the application level
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
