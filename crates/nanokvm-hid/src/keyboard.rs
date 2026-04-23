@@ -10,6 +10,7 @@ use nanokvm_core::Result;
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 use crate::hid::Hid;
 use crate::keycodes::KeyCode;
@@ -17,6 +18,9 @@ use crate::keycodes::KeyCode;
 >>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 /// Keyboard report size
 const KEYBOARD_REPORT_SIZE: usize = 8;
@@ -35,12 +39,19 @@ impl Keyboard {
 <<<<<<< Updated upstream
         crate::hid::Hid::instance().write_keyboard(&report)
 =======
+<<<<<<< Updated upstream
+=======
+        debug!("Keyboard press: modifier={:#04x}, keys={:?}", modifier, keys);
+>>>>>>> Stashed changes
 <<<<<<< HEAD
         Hid::instance().write_keyboard(&report)
 >>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
 =======
         crate::hid::Hid::instance().write_keyboard(&report)
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
@@ -53,6 +64,7 @@ impl Keyboard {
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         crate::hid::Hid::instance().write_keyboard(&report)
 =======
         Hid::instance().write_keyboard(&report)
@@ -60,6 +72,9 @@ impl Keyboard {
 =======
         crate::hid::Hid::instance().write_keyboard(&report)
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
@@ -77,6 +92,7 @@ impl Keyboard {
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
 =======
             if let Some((modifier, key)) = KeyCode::from_char(ch) {
@@ -84,6 +100,9 @@ impl Keyboard {
 =======
             if let Some((modifier, key)) = crate::keycodes::key_from_char(ch) {
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 Self::tap(modifier, key)?;
                 // Small delay between keystrokes would be handled by caller

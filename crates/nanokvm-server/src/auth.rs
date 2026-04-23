@@ -11,6 +11,7 @@ use argon2::{
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
@@ -23,6 +24,9 @@ use tracing::{debug, info, warn};
 =======
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     Argon2,
 };
@@ -30,14 +34,20 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 use tracing::{debug, info, warn};
 =======
+=======
+>>>>>>> Stashed changes
 <<<<<<< HEAD
 use tracing::{debug, error, info, warn};
 >>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
 =======
 use tracing::{debug, info, warn};
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 use uuid::Uuid;
 
@@ -182,14 +192,20 @@ impl AuthManager {
 <<<<<<< HEAD
 =======
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         // Generate a random salt using UUID
         let salt_string = Uuid::new_v4().to_string().replace("-", "");
         let salt = SaltString::from_b64(&salt_string[..22])
             .map_err(|e| Error::auth(format!("Salt generation failed: {}", e)))?;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         
 =======
+=======
+>>>>>>> Stashed changes
 <<<<<<< HEAD
 
 =======
@@ -198,6 +214,9 @@ impl AuthManager {
 =======
         
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         let argon2 = Argon2::default();
 

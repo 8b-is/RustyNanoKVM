@@ -7,6 +7,9 @@
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -33,6 +36,9 @@ use nanokvm_core::{Error, Result};
 =======
 use nanokvm_core::Result;
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 /// GPIO sysfs base path

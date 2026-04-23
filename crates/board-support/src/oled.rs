@@ -6,6 +6,9 @@
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 use tracing::{debug, info};
 
@@ -273,6 +276,7 @@ impl OledDisplay {
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Copy framebuffer to send (to avoid borrowing issues)
         let data = self.framebuffer;
         self.send_data(&data)?;
@@ -285,6 +289,9 @@ impl OledDisplay {
         let data = self.framebuffer;
         self.send_data(&data)?;
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         Ok(())
     }
