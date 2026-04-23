@@ -13,6 +13,9 @@ use parking_lot::Mutex;
 <<<<<<< HEAD
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -41,6 +44,9 @@ use crate::gpio::{Gpio, Value};
 >>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
