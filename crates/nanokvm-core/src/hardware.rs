@@ -2,8 +2,6 @@
 //!
 //! Provides types and utilities for different hardware versions.
 
-use std::path::Path;
-
 use tracing::info;
 
 /// Hardware version detection
@@ -23,17 +21,13 @@ impl HardwareVersion {
     /// Detect the current hardware version
     pub fn detect() -> Self {
         // Check device tree or board identification files
-        if Path::new("/sys/firmware/devicetree/base/model").exists() {
-            if let Ok(model) = std::fs::read_to_string("/sys/firmware/devicetree/base/model") {
-                return Self::from_model(&model);
-            }
+        if let Ok(model) = std::fs::read_to_string("/sys/firmware/devicetree/base/model") {
+            return Self::from_model(&model);
         }
 
         // Check for NanoKVM-specific identification
-        if Path::new("/etc/kvm/hw_version").exists() {
-            if let Ok(version) = std::fs::read_to_string("/etc/kvm/hw_version") {
-                return Self::from_version_file(&version);
-            }
+        if let Ok(version) = std::fs::read_to_string("/etc/kvm/hw_version") {
+            return Self::from_version_file(&version);
         }
 
         info!("Unable to detect hardware version, assuming Cube");
@@ -96,7 +90,7 @@ impl HardwareVersion {
     pub fn max_resolution(&self) -> (u32, u32) {
         match self {
             HardwareVersion::Pro => (3840, 2160), // 4K
-            _ => (1920, 1080),                     // 1080p
+            _ => (1920, 1080),                    // 1080p
         }
     }
 }

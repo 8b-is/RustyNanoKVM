@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use tokio::signal;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 mod api;
 mod auth;
@@ -41,8 +41,8 @@ async fn main() {
     let app = create_router(state.clone());
 
     // Get server address from config
-    let config = nanokvm_core::Config::instance().read();
-    let addr: SocketAddr = format!("0.0.0.0:{}", config.port.http)
+    let http_port = nanokvm_core::Config::instance().read().port.http;
+    let addr: SocketAddr = format!("0.0.0.0:{}", http_port)
         .parse()
         .expect("Invalid server address");
 

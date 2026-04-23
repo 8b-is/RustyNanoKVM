@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{Json, extract::State, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -141,6 +141,7 @@ pub async fn screen(State(_state): State<Arc<AppState>>) -> (StatusCode, Json<Sc
 
 /// OLED control request
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct OledRequest {
     /// Enable or disable OLED
     #[serde(default)]

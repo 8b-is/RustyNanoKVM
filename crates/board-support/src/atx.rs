@@ -149,7 +149,10 @@ impl AtxControl {
 
     /// Press the power button briefly
     pub fn power_short_press(&self) -> Result<()> {
-        self.press_button(&self.power_gpio, Duration::from_millis(POWER_PRESS_DURATION))
+        self.press_button(
+            &self.power_gpio,
+            Duration::from_millis(POWER_PRESS_DURATION),
+        )
     }
 
     /// Hold the power button to force power off
@@ -162,7 +165,10 @@ impl AtxControl {
 
     /// Press the reset button
     pub fn reset(&self) -> Result<()> {
-        self.press_button(&self.reset_gpio, Duration::from_millis(RESET_PRESS_DURATION))
+        self.press_button(
+            &self.reset_gpio,
+            Duration::from_millis(RESET_PRESS_DURATION),
+        )
     }
 
     /// Check if computer is powered on (by reading power LED)

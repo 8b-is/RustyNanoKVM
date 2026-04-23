@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 use bytes::Bytes;
 use parking_lot::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use nanokvm_core::{Error, Result};
 
@@ -156,6 +156,7 @@ impl VideoCapture {
     /// * `height` - Desired output height
     /// * `encoder` - Encoder type (MJPEG or H.264)
     /// * `quality` - Quality parameter (50-100 for MJPEG, 500-10000 for H.264)
+    #[allow(unused_variables)]
     pub fn read_frame(
         &self,
         width: u16,
@@ -208,7 +209,10 @@ impl VideoCapture {
         }
 
         self.hdmi_enabled = enabled;
-        debug!("HDMI input {}", if enabled { "enabled" } else { "disabled" });
+        debug!(
+            "HDMI input {}",
+            if enabled { "enabled" } else { "disabled" }
+        );
         Ok(())
     }
 

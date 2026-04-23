@@ -14,19 +14,17 @@ use tracing::debug;
 use crate::state::AppState;
 
 /// Authentication middleware
+#[allow(dead_code)]
 pub async fn auth_middleware(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let config = state.config();
-
     // Skip auth if disabled
-    if config.is_auth_disabled() {
-        drop(config);
+    let auth_disabled = state.config().is_auth_disabled();
+    if auth_disabled {
         return Ok(next.run(request).await);
     }
-    drop(config);
 
     // Get token from header
     let token = request
@@ -36,15 +34,13 @@ pub async fn auth_middleware(
         .and_then(|v| v.strip_prefix("Bearer "));
 
     match token {
-        Some(token) => {
-            match state.auth.validate_token(token) {
-                Ok(_claims) => {
-                    debug!("Token validated successfully");
-                    Ok(next.run(request).await)
-                }
-                Err(_) => Err(StatusCode::UNAUTHORIZED),
+        Some(token) => match state.auth.validate_token(token) {
+            Ok(_claims) => {
+                debug!("Token validated successfully");
+                Ok(next.run(request).await)
             }
-        }
+            Err(_) => Err(StatusCode::UNAUTHORIZED),
+        },
         None => Err(StatusCode::UNAUTHORIZED),
     }
 }

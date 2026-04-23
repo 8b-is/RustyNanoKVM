@@ -47,6 +47,7 @@ const I2C_SLAVE_FORCE: libc::c_ulong = 0x0706;
 /// I2C bus controller
 pub struct I2c {
     file: File,
+    #[allow(dead_code)]
     bus: u8,
     current_addr: Option<u8>,
 }

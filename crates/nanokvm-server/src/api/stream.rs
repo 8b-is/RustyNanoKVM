@@ -5,7 +5,7 @@ use std::sync::Arc;
 use axum::{
     body::Body,
     extract::{Query, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
 use serde::Deserialize;
@@ -59,10 +59,7 @@ pub async fn mjpeg(
         Err(e) => Response::builder()
             .status(StatusCode::SERVICE_UNAVAILABLE)
             .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(format!(
-                r#"{{"code": -1, "msg": "{}"}}"#,
-                e
-            )))
+            .body(Body::from(format!(r#"{{"code": -1, "msg": "{}"}}"#, e)))
             .unwrap(),
     }
 }
@@ -92,10 +89,7 @@ pub async fn snapshot(
         Err(e) => Response::builder()
             .status(StatusCode::SERVICE_UNAVAILABLE)
             .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(format!(
-                r#"{{"code": -1, "msg": "{}"}}"#,
-                e
-            )))
+            .body(Body::from(format!(r#"{{"code": -1, "msg": "{}"}}"#, e)))
             .unwrap(),
     }
 }

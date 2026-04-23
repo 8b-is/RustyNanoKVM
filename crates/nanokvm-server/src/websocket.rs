@@ -3,15 +3,15 @@
 use std::sync::Arc;
 
 use axum::{
+    Router,
     extract::{
-        ws::{Message, WebSocket, WebSocketUpgrade},
         State,
+        ws::{Message, WebSocket, WebSocketUpgrade},
     },
     response::IntoResponse,
     routing::get,
-    Router,
 };
-use futures::{sink::SinkExt, stream::StreamExt};
+use futures::stream::StreamExt;
 use tracing::{debug, error, info};
 
 use crate::state::AppState;
@@ -32,8 +32,8 @@ async fn hid_websocket(
 }
 
 /// Handle HID WebSocket connection
-async fn handle_hid_connection(socket: WebSocket, state: Arc<AppState>) {
-    let (mut sender, mut receiver) = socket.split();
+async fn handle_hid_connection(socket: WebSocket, _state: Arc<AppState>) {
+    let (_sender, mut receiver) = socket.split();
 
     info!("HID WebSocket connected");
 
@@ -70,7 +70,7 @@ async fn terminal_websocket(
 
 /// Handle terminal WebSocket connection
 async fn handle_terminal_connection(socket: WebSocket, _state: Arc<AppState>) {
-    let (mut sender, mut receiver) = socket.split();
+    let (_sender, mut receiver) = socket.split();
 
     info!("Terminal WebSocket connected");
 
@@ -82,7 +82,7 @@ async fn handle_terminal_connection(socket: WebSocket, _state: Arc<AppState>) {
                 debug!("Terminal input: {}", text);
                 // Send to PTY
             }
-            Ok(Message::Binary(data)) => {
+            Ok(Message::Binary(_data)) => {
                 // Send to PTY
             }
             Ok(Message::Close(_)) => {

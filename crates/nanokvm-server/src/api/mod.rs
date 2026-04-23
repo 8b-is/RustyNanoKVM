@@ -1,18 +1,18 @@
 //! API routes module
 
+pub mod application;
 pub mod auth;
 pub mod hid;
-pub mod stream;
-pub mod storage;
-pub mod vm;
 pub mod network;
-pub mod application;
+pub mod storage;
+pub mod stream;
+pub mod vm;
 
 use std::sync::Arc;
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 
 use crate::state::AppState;

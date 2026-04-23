@@ -98,11 +98,7 @@ impl Value {
 
 impl From<bool> for Value {
     fn from(value: bool) -> Self {
-        if value {
-            Value::High
-        } else {
-            Value::Low
-        }
+        if value { Value::High } else { Value::Low }
     }
 }
 
@@ -260,10 +256,10 @@ impl Gpio {
 
 impl Drop for Gpio {
     fn drop(&mut self) {
-        if self.exported {
-            if let Err(e) = self.unexport() {
-                warn!("Failed to unexport GPIO {}: {}", self.pin, e);
-            }
+        if self.exported
+            && let Err(e) = self.unexport()
+        {
+            warn!("Failed to unexport GPIO {}: {}", self.pin, e);
         }
     }
 }

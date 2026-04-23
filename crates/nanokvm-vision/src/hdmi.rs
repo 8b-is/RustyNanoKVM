@@ -3,9 +3,9 @@
 use std::fs;
 use std::path::Path;
 
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
-use nanokvm_core::{Error, Result};
+use nanokvm_core::Result;
 
 /// HDMI input status
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn test_hdmi_input_creation() {
-        let hdmi = HdmiInput::new();
+        let _hdmi = HdmiInput::new();
         // Initial state depends on config file
     }
 }

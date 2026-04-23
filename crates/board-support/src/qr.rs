@@ -17,12 +17,8 @@ pub fn generate_qr(data: &str, size: u32) -> Result<GrayImage> {
     let qr_image = code.render::<Luma<u8>>().quiet_zone(false).build();
 
     // Scale to requested size
-    let scaled = image::imageops::resize(
-        &qr_image,
-        size,
-        size,
-        image::imageops::FilterType::Nearest,
-    );
+    let scaled =
+        image::imageops::resize(&qr_image, size, size, image::imageops::FilterType::Nearest);
 
     debug!("Generated QR code for '{}' at {}x{}", data, size, size);
     Ok(scaled)
@@ -35,7 +31,7 @@ pub fn generate_qr_bitmap(data: &str, target_width: u32, target_height: u32) -> 
 
     // Convert to 1-bit format suitable for OLED
     // OLED format: 8 vertical pixels per byte, horizontal pages
-    let pages = (target_height + 7) / 8;
+    let pages = target_height.div_ceil(8);
     let mut bitmap = vec![0u8; (target_width * pages) as usize];
 
     let x_offset = (target_width - size) / 2;

@@ -21,6 +21,7 @@ use tracing::{debug, info};
 use nanokvm_core::Result;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
 use crate::i2c::{I2c, addresses};
 =======
@@ -33,6 +34,9 @@ use nanokvm_core::Result;
 
 >>>>>>> Stashed changes
 use crate::i2c::{addresses, I2c};
+=======
+use crate::i2c::{I2c, addresses};
+>>>>>>> Stashed changes
 
 /// OLED display width
 pub const DISPLAY_WIDTH: u32 = 128;
@@ -42,6 +46,7 @@ pub const DISPLAY_HEIGHT: u32 = 64;
 pub const FRAMEBUFFER_SIZE: usize = (DISPLAY_WIDTH as usize * DISPLAY_HEIGHT as usize) / 8;
 
 /// SSD1306 commands
+#[allow(dead_code)]
 mod cmd {
     pub const SET_CONTRAST: u8 = 0x81;
     pub const DISPLAY_ALL_ON_RESUME: u8 = 0xA4;
@@ -76,6 +81,7 @@ const CONTROL_DATA: u8 = 0x40;
 /// OLED display driver
 pub struct OledDisplay {
     i2c: I2c,
+    #[allow(dead_code)]
     address: u8,
     framebuffer: [u8; FRAMEBUFFER_SIZE],
     width: u32,
@@ -115,7 +121,7 @@ impl OledDisplay {
             0x3F, // 64 lines
             cmd::SET_DISPLAY_OFFSET,
             0x00,
-            cmd::SET_START_LINE | 0x00,
+            cmd::SET_START_LINE,
             cmd::CHARGE_PUMP,
             0x14, // Enable charge pump
             cmd::MEMORY_MODE,
@@ -257,7 +263,7 @@ impl OledDisplay {
         // Very basic bitmap font - just draw a placeholder box for now
         // A real implementation would use a proper font table
         let code = ch as u8;
-        if code >= 32 && code < 127 {
+        if (32..127).contains(&code) {
             // Draw character box
             self.draw_rect(x, y, 5, 7, true);
         }

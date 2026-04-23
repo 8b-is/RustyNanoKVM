@@ -7,6 +7,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use argon2::{
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 =======
 <<<<<<< HEAD
@@ -36,9 +37,12 @@ use tracing::{debug, info, warn};
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     Argon2,
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 <<<<<<< Updated upstream
@@ -230,6 +234,7 @@ impl AuthManager {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         
 =======
 =======
@@ -255,6 +260,9 @@ impl AuthManager {
 =======
 >>>>>>> Stashed changes
 =======
+>>>>>>> Stashed changes
+=======
+
 >>>>>>> Stashed changes
         let argon2 = Argon2::default();
 
@@ -421,12 +429,11 @@ impl AuthManager {
         drop(config);
 
         let failed = self.failed_logins.read();
-        if let Some(entry) = failed.get(username) {
-            if entry.count >= max_failures {
-                if entry.first_failure.elapsed().unwrap_or_default() < lockout_duration {
-                    return true;
-                }
-            }
+        if let Some(entry) = failed.get(username)
+            && entry.count >= max_failures
+            && entry.first_failure.elapsed().unwrap_or_default() < lockout_duration
+        {
+            return true;
         }
         false
     }
@@ -467,8 +474,8 @@ impl AuthManager {
     /// Save accounts to file
     fn save_accounts(&self, accounts: &HashMap<String, Account>) -> Result<()> {
         let content: String = accounts
-            .iter()
-            .map(|(_, acc)| format!("{}:{}", acc.username, acc.password_hash))
+            .values()
+            .map(|acc| format!("{}:{}", acc.username, acc.password_hash))
             .collect::<Vec<_>>()
             .join("\n");
 

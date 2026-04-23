@@ -5,6 +5,7 @@ members = [
     "crates/nanokvm-core",
     "crates/nanokvm-hid",
     "crates/nanokvm-vision",
+    "crates/nanokvm-mcp",
     "crates/board-support",
 ]
 
@@ -12,7 +13,7 @@ members = [
 version = "0.1.0"
 edition = "2024"
 authors = ["NanoKVM Team"]
-license = "GPL-3.0"
+license = "MIT"
 repository = "https://github.com/8b-is/RustyNanoKVM"
 description = "Compact, open-source IP-KVM device based on RISC-V"
 rust-version = "1.85"
@@ -74,6 +75,9 @@ memmap2 = "0.9"
 # QR code
 qrcode = "0.14"
 image = "0.25"
+
+# Encoding
+base64 = "0.22"
 
 # Testing
 rstest = "0.25"

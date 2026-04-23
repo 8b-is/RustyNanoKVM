@@ -43,8 +43,15 @@ impl Keyboard {
     /// Send a key press event
     pub fn press(modifier: u8, keys: &[u8]) -> Result<()> {
         let report = Self::build_report(modifier, keys);
+<<<<<<< Updated upstream
         debug!("Keyboard press: modifier={:#04x}, keys={:?}", modifier, keys);
 <<<<<<< Updated upstream
+=======
+        debug!(
+            "Keyboard press: modifier={:#04x}, keys={:?}",
+            modifier, keys
+        );
+>>>>>>> Stashed changes
         crate::hid::Hid::instance().write_keyboard(&report)
 =======
 <<<<<<< Updated upstream

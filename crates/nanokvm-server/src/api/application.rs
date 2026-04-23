@@ -2,12 +2,12 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{Json, extract::State, http::StatusCode};
 use serde::Serialize;
 use tracing::debug;
 
-use crate::state::AppState;
 use crate::VERSION;
+use crate::state::AppState;
 
 /// Application info response
 #[derive(Debug, Serialize)]

@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, Json};
-use serde::{Deserialize, Serialize};
+use axum::{Json, extract::State, http::StatusCode};
+use serde::Deserialize;
 use tracing::debug;
 
 use nanokvm_hid::{Keyboard, Mouse};
@@ -24,7 +24,10 @@ pub async fn keyboard(
     State(_state): State<Arc<AppState>>,
     Json(req): Json<KeyboardRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    debug!("Keyboard input: modifier={:#04x}, keys={:?}", req.modifier, req.keys);
+    debug!(
+        "Keyboard input: modifier={:#04x}, keys={:?}",
+        req.modifier, req.keys
+    );
 
     match Keyboard::press(req.modifier, &req.keys) {
         Ok(_) => {

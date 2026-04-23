@@ -1,7 +1,5 @@
 //! Application state management
 
-use std::sync::Arc;
-
 use parking_lot::RwLock;
 use tracing::info;
 
@@ -18,6 +16,7 @@ pub struct AppState {
     /// Authentication manager
     pub auth: AuthManager,
     /// HID device manager
+    #[allow(dead_code)]
     pub hid: &'static Hid,
     /// Video capture manager
     pub video: &'static RwLock<VideoCapture>,

@@ -5,8 +5,8 @@
 
 pub mod hid;
 pub mod keyboard;
-pub mod mouse;
 pub mod keycodes;
+pub mod mouse;
 
 pub use hid::Hid;
 pub use keyboard::Keyboard;
