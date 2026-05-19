@@ -123,10 +123,9 @@ impl VideoCapture {
 
         // In a real implementation, this would call kvmv_init()
         // For now, we'll use a mock implementation
-        #[cfg(feature = "ffi")]
+        #[cfg(not(feature = "mock"))]
         {
-            // FFI call to vendor SDK
-            // unsafe { ffi::kvmv_init(0) }
+            unsafe { crate::ffi::kvmv_init(0) };
         }
 
         self.initialized = true;
@@ -140,9 +139,9 @@ impl VideoCapture {
             return;
         }
 
-        #[cfg(feature = "ffi")]
+        #[cfg(not(feature = "mock"))]
         {
-            // unsafe { ffi::kvmv_deinit() }
+            unsafe { crate::ffi::kvmv_deinit() };
         }
 
         self.initialized = false;
@@ -186,8 +185,45 @@ impl VideoCapture {
 
         #[cfg(not(feature = "mock"))]
         {
-            // Real FFI implementation would go here
-            Err(Error::vision("Video capture not available"))
+            let mut data_ptr: *mut std::os::raw::c_uchar = std::ptr::null_mut();
+            let mut data_size: std::os::raw::c_uint = 0;
+            
+            let enc_type = match encoder {
+                EncoderType::Mjpeg => 0,
+                EncoderType::H264 => 1,
+            };
+
+            let res = unsafe {
+                crate::ffi::kvmv_read_img(
+                    width,
+                    height,
+                    enc_type,
+                    quality,
+                    &mut data_ptr,
+                    &mut data_size,
+                )
+            };
+
+            if res < 0 {
+                return Err(Error::vision(format!("Video capture error: {}", res)));
+            }
+            
+            let frame_type = CaptureResult::from(res as i32);
+            let bytes = if !data_ptr.is_null() && data_size > 0 {
+                let slice = unsafe { std::slice::from_raw_parts(data_ptr, data_size as usize) };
+                let b = bytes::Bytes::copy_from_slice(slice);
+                unsafe { crate::ffi::free_kvmv_data(&mut data_ptr) };
+                b
+            } else {
+                bytes::Bytes::new()
+            };
+
+            Ok(VideoFrame {
+                data: bytes,
+                frame_type,
+                width,
+                height,
+            })
         }
     }
 
@@ -203,9 +239,9 @@ impl VideoCapture {
 
     /// Enable or disable HDMI input
     pub fn set_hdmi_enabled(&mut self, enabled: bool) -> Result<()> {
-        #[cfg(feature = "ffi")]
+        #[cfg(not(feature = "mock"))]
         {
-            // unsafe { ffi::kvmv_hdmi_control(if enabled { 1 } else { 0 }) }
+            unsafe { crate::ffi::kvmv_hdmi_control(if enabled { 1 } else { 0 }) };
         }
 
         self.hdmi_enabled = enabled;
@@ -225,9 +261,9 @@ impl VideoCapture {
     pub fn set_gop(&mut self, gop: u8) {
         self.gop = gop;
 
-        #[cfg(feature = "ffi")]
+        #[cfg(not(feature = "mock"))]
         {
-            // unsafe { ffi::set_h264_gop(gop) }
+            unsafe { crate::ffi::set_h264_gop(gop) };
         }
 
         debug!("H.264 GOP set to {}", gop);
@@ -237,9 +273,9 @@ impl VideoCapture {
     pub fn set_frame_detect(&mut self, value: u8) {
         self.frame_detect = value;
 
-        #[cfg(feature = "ffi")]
+        #[cfg(not(feature = "mock"))]
         {
-            // unsafe { ffi::set_frame_detact(value) }
+            unsafe { crate::ffi::set_frame_detact(value) };
         }
 
         debug!("Frame detection set to {}", value);

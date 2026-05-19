@@ -5,7 +5,6 @@ members = [
     "crates/nanokvm-core",
     "crates/nanokvm-hid",
     "crates/nanokvm-vision",
-    "crates/nanokvm-mcp",
     "crates/board-support",
 ]
 
