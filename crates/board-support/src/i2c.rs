@@ -6,34 +6,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::io::AsRawFd;
 
-<<<<<<< Updated upstream
 use nix::libc;
 use tracing::debug;
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-use nix::libc;
-use tracing::debug;
-=======
-use tracing::{debug, error};
->>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
-=======
-use nix::libc;
-use tracing::debug;
->>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 use nanokvm_core::{Error, Result};
 
@@ -78,11 +52,11 @@ impl I2c {
         }
 
         let fd = self.file.as_raw_fd();
-        let result = unsafe { libc::ioctl(fd, I2C_SLAVE, addr as libc::c_int) };
+        let result = unsafe { libc::ioctl(fd, I2C_SLAVE as _, addr as libc::c_int) };
 
         if result < 0 {
             // Try force mode if regular mode fails (device might be in use by kernel)
-            let result = unsafe { libc::ioctl(fd, I2C_SLAVE_FORCE, addr as libc::c_int) };
+            let result = unsafe { libc::ioctl(fd, I2C_SLAVE_FORCE as _, addr as libc::c_int) };
             if result < 0 {
                 return Err(Error::Hardware(format!(
                     "Failed to set I2C slave address {:#04x}",

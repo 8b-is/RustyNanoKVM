@@ -52,6 +52,7 @@ once_cell = { workspace = true }
 parking_lot = { workspace = true }
 bytes = { workspace = true }
 futures = { workspace = true }
+async-stream = { workspace = true }
 async-trait = { workspace = true }
 
 [dev-dependencies]

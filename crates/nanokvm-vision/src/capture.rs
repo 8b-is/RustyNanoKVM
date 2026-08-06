@@ -121,15 +121,17 @@ impl VideoCapture {
             return Ok(());
         }
 
-        // In a real implementation, this would call kvmv_init()
-        // For now, we'll use a mock implementation
         #[cfg(not(feature = "mock"))]
         {
-            unsafe { crate::ffi::kvmv_init(0) };
+            unsafe {
+                crate::ffi::kvmv_init(0);
+                crate::ffi::kvmv_hdmi_control(1);
+            };
         }
 
         self.initialized = true;
-        info!("Video capture initialized");
+        self.hdmi_enabled = true;
+        info!("Video capture initialized with HDMI input enabled");
         Ok(())
     }
 
@@ -193,18 +195,30 @@ impl VideoCapture {
                 EncoderType::H264 => 1,
             };
 
-            let res = unsafe {
-                crate::ffi::kvmv_read_img(
-                    width,
-                    height,
-                    enc_type,
-                    quality,
-                    &mut data_ptr,
-                    &mut data_size,
-                )
-            };
+            let mut retries = 0;
+            let mut res;
 
-            if res < 0 {
+            loop {
+                res = unsafe {
+                    crate::ffi::kvmv_read_img(
+                        width,
+                        height,
+                        enc_type,
+                        quality,
+                        &mut data_ptr,
+                        &mut data_size,
+                    )
+                };
+
+                if (res != -5 && res != -1) || retries >= 25 {
+                    break;
+                }
+                retries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+
+            if res < 0 && (data_ptr.is_null() || data_size == 0) {
+                debug!("kvmv_read_img returned status: {}", res);
                 return Err(Error::vision(format!("Video capture error: {}", res)));
             }
             

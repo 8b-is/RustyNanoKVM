@@ -3,20 +3,6 @@
 //! Provides GPIO access using the sysfs interface and memory-mapped I/O
 //! for high-performance operations.
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -24,34 +10,6 @@ use std::path::PathBuf;
 use tracing::{debug, warn};
 
 use nanokvm_core::Result;
-<<<<<<< Updated upstream
-=======
-=======
-use std::fs::{self, File, OpenOptions};
-=======
-use std::fs::{File, OpenOptions};
->>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
-use std::io::{Read, Write};
-use std::path::PathBuf;
-
-use tracing::{debug, warn};
-
-<<<<<<< HEAD
-use nanokvm_core::{Error, Result};
->>>>>>> febff1d (feat: Add Rust workspace structure with all core crates and infrastructure)
-=======
-use nanokvm_core::Result;
->>>>>>> 1220bc0 (fix: Fix compilation errors and pass all tests)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 /// GPIO sysfs base path
 const GPIO_SYSFS_PATH: &str = "/sys/class/gpio";
