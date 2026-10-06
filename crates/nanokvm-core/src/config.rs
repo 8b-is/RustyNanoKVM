@@ -181,6 +181,15 @@ pub enum HardwareVersion {
 }
 
 impl Config {
+    /// Load startup configuration without silently replacing failures with defaults.
+    pub fn try_instance() -> Result<&'static RwLock<Config>> {
+        if let Some(config) = CONFIG.get() {
+            return Ok(config);
+        }
+        let config = Self::load()?;
+        Ok(CONFIG.get_or_init(|| RwLock::new(config)))
+    }
+
     /// Get the global configuration instance
     pub fn instance() -> &'static RwLock<Config> {
         CONFIG.get_or_init(|| {
@@ -233,7 +242,7 @@ impl Config {
 
         // Validate protocol
         if self.proto != "http" && self.proto != "https" {
-            self.proto = "http".to_string();
+            return Err(crate::Error::config("Unsupported server protocol"));
         }
 
         Ok(())
@@ -262,5 +271,28 @@ impl Config {
     /// Check if HTTPS is enabled
     pub fn is_https(&self) -> bool {
         self.proto == "https"
+    }
+}
+
+#[cfg(test)]
+mod transport_config_tests {
+    use super::*;
+
+    #[test]
+    fn invalid_protocol_is_not_silently_downgraded() {
+        let mut config = Config::default();
+        config.proto = "HTTPS".into();
+        assert!(config.validate().is_err());
+        assert_eq!(config.proto, "HTTPS");
+    }
+
+    #[test]
+    fn explicit_protocols_survive_validation() {
+        for protocol in ["http", "https"] {
+            let mut config = Config::default();
+            config.proto = protocol.into();
+            config.validate().unwrap();
+            assert_eq!(config.proto, protocol);
+        }
     }
 }
