@@ -37,8 +37,14 @@ async fn main() {
         }
     };
     let transport = match transport::PreparedTransport::prepare(
-        &config.proto, config.port.http, config.port.https, &config.cert.crt, &config.cert.key,
-    ).await {
+        &config.proto,
+        config.port.http,
+        config.port.https,
+        &config.cert.crt,
+        &config.cert.key,
+    )
+    .await
+    {
         Ok(transport) => transport,
         Err(error) => {
             error!("Server transport initialization failed: {}", error);
@@ -58,7 +64,11 @@ async fn main() {
     // Create router with all routes
     let app = create_router(state.clone());
 
-    info!("Starting {} server on {}", config.proto, transport.address());
+    info!(
+        "Starting {} server on {}",
+        config.proto,
+        transport.address()
+    );
     if let Err(error) = transport.serve(app, shutdown_signal()).await {
         error!("Server failed: {}", error);
         std::process::exit(1);
@@ -92,9 +102,13 @@ fn create_router(state: Arc<AppState>) -> Router {
 
     Router::new()
         .nest("/api", api::router(state.clone()))
-        .nest("/ws", websocket::router().route_layer(
-            axum::middleware::from_fn_with_state(state.clone(), middleware::websocket_auth_middleware),
-        ))
+        .nest(
+            "/ws",
+            websocket::router().route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::websocket_auth_middleware,
+            )),
+        )
         .fallback_service(static_files)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

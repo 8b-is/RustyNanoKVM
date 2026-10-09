@@ -65,7 +65,9 @@ async fn authenticate(
         .auth
         .validate_access_token(token)
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
-    request.extensions_mut().insert(AuthenticatedUser(claims.sub));
+    request
+        .extensions_mut()
+        .insert(AuthenticatedUser(claims.sub));
     debug!("Token validated successfully");
     Ok(next.run(request).await)
 }

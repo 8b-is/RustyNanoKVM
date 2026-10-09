@@ -49,7 +49,10 @@ pub fn router(state: Arc<AppState>) -> Router<Arc<AppState>> {
         // Network routes
         .route("/network/ip", get(network::get_ip))
         .route("/network/hostname", get(network::get_hostname))
-        .route_layer(axum::middleware::from_fn_with_state(state, crate::middleware::auth_middleware))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state,
+            crate::middleware::auth_middleware,
+        ))
         // Login and refresh authenticate their own request bodies.
         .route("/auth/login", post(auth::login))
         .route("/auth/refresh", post(auth::refresh))

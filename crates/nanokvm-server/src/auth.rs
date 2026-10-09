@@ -122,9 +122,13 @@ impl AuthManager {
             Ok(content) => {
                 let password = legacy_plaintext_password(&content)?;
                 let hash = self.hash_password(password)?;
-                accounts.insert("admin".to_string(), Account {
-                    username: "admin".to_string(), password_hash: hash,
-                });
+                accounts.insert(
+                    "admin".to_string(),
+                    Account {
+                        username: "admin".to_string(),
+                        password_hash: hash,
+                    },
+                );
             }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(error.into()),
@@ -340,10 +344,15 @@ impl AuthManager {
     }
 
     pub fn password_updated(&self, username: &str) -> Result<bool> {
-        let hash = self.accounts.read().get(username)
-            .ok_or_else(|| Error::auth("Account unavailable"))?.password_hash.clone();
-        let parsed = PasswordHash::new(&hash)
-            .map_err(|_| Error::auth("Invalid account password hash"))?;
+        let hash = self
+            .accounts
+            .read()
+            .get(username)
+            .ok_or_else(|| Error::auth("Account unavailable"))?
+            .password_hash
+            .clone();
+        let parsed =
+            PasswordHash::new(&hash).map_err(|_| Error::auth("Invalid account password hash"))?;
         match Argon2::default().verify_password(b"admin", &parsed) {
             Ok(()) => Ok(false),
             Err(argon2::password_hash::Error::Password) => Ok(true),
@@ -415,20 +424,32 @@ impl AuthManager {
 fn parse_accounts(content: &str) -> Result<HashMap<String, Account>> {
     let mut accounts = HashMap::new();
     for line in content.lines() {
-        let (username, hash) = line.split_once(':')
+        let (username, hash) = line
+            .split_once(':')
             .ok_or_else(|| Error::auth("Malformed account record"))?;
         if username.is_empty() || username.chars().any(char::is_control) {
             return Err(Error::auth("Invalid account username"));
         }
-        let parsed = PasswordHash::new(hash)
-            .map_err(|_| Error::auth("Invalid account password hash"))?;
-        if !matches!(parsed.algorithm.as_str(), "argon2id" | "argon2i" | "argon2d")
-            || parsed.salt.is_none() || parsed.hash.is_none() {
+        let parsed =
+            PasswordHash::new(hash).map_err(|_| Error::auth("Invalid account password hash"))?;
+        if !matches!(
+            parsed.algorithm.as_str(),
+            "argon2id" | "argon2i" | "argon2d"
+        ) || parsed.salt.is_none()
+            || parsed.hash.is_none()
+        {
             return Err(Error::auth("Unsupported account password hash"));
         }
-        if accounts.insert(username.to_string(), Account {
-            username: username.to_string(), password_hash: hash.to_string(),
-        }).is_some() {
+        if accounts
+            .insert(
+                username.to_string(),
+                Account {
+                    username: username.to_string(),
+                    password_hash: hash.to_string(),
+                },
+            )
+            .is_some()
+        {
             return Err(Error::auth("Duplicate account username"));
         }
     }
@@ -441,16 +462,21 @@ fn parse_accounts(content: &str) -> Result<HashMap<String, Account>> {
 fn legacy_plaintext_password(content: &str) -> Result<&str> {
     let password = content.trim();
     if password.is_empty() || password.starts_with('{') || password.starts_with('[') {
-        return Err(Error::auth("Legacy account format requires explicit migration"));
+        return Err(Error::auth(
+            "Legacy account format requires explicit migration",
+        ));
     }
     Ok(password)
 }
 
 // Write beside the destination, then rename: failed writes never truncate the live file.
 fn write_account_file(path: &Path, content: &[u8]) -> std::io::Result<()> {
-    let parent = path.parent().ok_or_else(|| std::io::Error::new(
-        std::io::ErrorKind::InvalidInput, "account file needs a parent directory",
-    ))?;
+    let parent = path.parent().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "account file needs a parent directory",
+        )
+    })?;
     let temporary = parent.join(format!(".account-{}.tmp", Uuid::new_v4()));
     let mut options = fs::OpenOptions::new();
     options.write(true).create_new(true);
@@ -470,10 +496,13 @@ fn write_account_file(path: &Path, content: &[u8]) -> std::io::Result<()> {
     }
     // Rename is the commit point. A directory-sync failure must not report a
     // rejected password change after the new file has already become visible.
-    if result.is_ok() {
-        if let Err(error) = fs::File::open(parent).and_then(|directory| directory.sync_all()) {
-            warn!("Account file replaced, but directory sync failed: {}", error);
-        }
+    if result.is_ok()
+        && let Err(error) = fs::File::open(parent).and_then(|directory| directory.sync_all())
+    {
+        warn!(
+            "Account file replaced, but directory sync failed: {}",
+            error
+        );
     }
     result
 }
@@ -522,9 +551,13 @@ pub(crate) mod access_tests {
     pub(crate) fn manager_with_password(password: &str) -> AuthManager {
         let manager = manager();
         let hash = manager.hash_password(password).unwrap();
-        manager.accounts.write().insert("test".into(), Account {
-            username: "test".into(), password_hash: hash,
-        });
+        manager.accounts.write().insert(
+            "test".into(),
+            Account {
+                username: "test".into(),
+                password_hash: hash,
+            },
+        );
         manager
     }
 
@@ -532,9 +565,10 @@ pub(crate) mod access_tests {
     fn failed_password_save_preserves_live_account() {
         let manager = password_manager();
         let before = manager.accounts.read()["test"].password_hash.clone();
-        let result = manager.change_password_with_save("test", "synthetic-old", "synthetic-new", |_| {
-            Err(Error::auth("synthetic persistence failure"))
-        });
+        let result =
+            manager.change_password_with_save("test", "synthetic-old", "synthetic-new", |_| {
+                Err(Error::auth("synthetic persistence failure"))
+            });
         assert!(result.is_err());
         assert_eq!(manager.accounts.read()["test"].password_hash, before);
     }
@@ -543,10 +577,12 @@ pub(crate) mod access_tests {
     fn successful_password_save_publishes_saved_hash() {
         let manager = password_manager();
         let mut saved_hash = String::new();
-        manager.change_password_with_save("test", "synthetic-old", "synthetic-new", |accounts| {
-            saved_hash = accounts["test"].password_hash.clone();
-            Ok(())
-        }).unwrap();
+        manager
+            .change_password_with_save("test", "synthetic-old", "synthetic-new", |accounts| {
+                saved_hash = accounts["test"].password_hash.clone();
+                Ok(())
+            })
+            .unwrap();
         assert_eq!(manager.accounts.read()["test"].password_hash, saved_hash);
         assert!(manager.verify_password("synthetic-new", &saved_hash));
         assert!(!manager.verify_password("synthetic-old", &saved_hash));
@@ -556,22 +592,29 @@ pub(crate) mod access_tests {
     fn wrong_current_password_never_calls_storage() {
         let manager = password_manager();
         let before = manager.accounts.read()["test"].password_hash.clone();
-        assert!(manager.change_password_with_save("test", "wrong", "synthetic-new", |_| {
-            panic!("storage must not be called for an invalid current password");
-        }).is_err());
+        assert!(
+            manager
+                .change_password_with_save("test", "wrong", "synthetic-new", |_| {
+                    panic!("storage must not be called for an invalid current password");
+                })
+                .is_err()
+        );
         assert_eq!(manager.accounts.read()["test"].password_hash, before);
     }
 
     struct TestDirectory(std::path::PathBuf);
     impl TestDirectory {
         fn new() -> Self {
-            let path = std::env::temp_dir().join(format!("nanokvm-account-test-{}", Uuid::new_v4()));
+            let path =
+                std::env::temp_dir().join(format!("nanokvm-account-test-{}", Uuid::new_v4()));
             fs::create_dir(&path).unwrap();
             Self(path)
         }
     }
     impl Drop for TestDirectory {
-        fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); }
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
     }
 
     #[test]
@@ -582,9 +625,13 @@ pub(crate) mod access_tests {
         write_account_file(&path, b"synthetic-new").unwrap();
         assert_eq!(fs::read(&path).unwrap(), b"synthetic-new");
         assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 1);
-        #[cfg(unix)] {
+        #[cfg(unix)]
+        {
             use std::os::unix::fs::PermissionsExt;
-            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
         }
     }
 
@@ -595,7 +642,10 @@ pub(crate) mod access_tests {
         fs::create_dir(&path).unwrap();
         fs::write(path.join("sentinel"), "untouched").unwrap();
         assert!(write_account_file(&path, b"synthetic-new").is_err());
-        assert_eq!(fs::read_to_string(path.join("sentinel")).unwrap(), "untouched");
+        assert_eq!(
+            fs::read_to_string(path.join("sentinel")).unwrap(),
+            "untouched"
+        );
         assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 1);
     }
 
@@ -609,7 +659,12 @@ pub(crate) mod access_tests {
         std::os::unix::fs::symlink(&target, &path).unwrap();
         write_account_file(&path, b"synthetic-new").unwrap();
         assert_eq!(fs::read_to_string(target).unwrap(), "untouched");
-        assert!(!fs::symlink_metadata(&path).unwrap().file_type().is_symlink());
+        assert!(
+            !fs::symlink_metadata(&path)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
     }
 
     #[test]
@@ -618,17 +673,29 @@ pub(crate) mod access_tests {
         let hash = manager.hash_password("synthetic").unwrap();
         let record = format!("test:{hash}");
         assert_eq!(parse_accounts(&record).unwrap()["test"].password_hash, hash);
-        for invalid in [String::new(), "junk".into(), "test:not-a-hash".into(),
-            format!(":{hash}"), format!("{record}\nmalformed"), format!("{record}\n{record}")] {
+        for invalid in [
+            String::new(),
+            "junk".into(),
+            "test:not-a-hash".into(),
+            format!(":{hash}"),
+            format!("{record}\nmalformed"),
+            format!("{record}\n{record}"),
+        ] {
             assert!(parse_accounts(&invalid).is_err());
         }
     }
 
     #[test]
     fn legacy_json_is_not_treated_as_plaintext_password() {
-        assert!(legacy_plaintext_password(r#"{"username":"user","password":"synthetic-bcrypt"}"#).is_err());
+        assert!(
+            legacy_plaintext_password(r#"{"username":"user","password":"synthetic-bcrypt"}"#)
+                .is_err()
+        );
         assert!(legacy_plaintext_password("   ").is_err());
-        assert_eq!(legacy_plaintext_password("synthetic-old\n").unwrap(), "synthetic-old");
+        assert_eq!(
+            legacy_plaintext_password("synthetic-old\n").unwrap(),
+            "synthetic-old"
+        );
     }
 
     #[test]
@@ -683,7 +750,9 @@ pub(crate) mod access_tests {
         fs::write(&legacy, "synthetic-legacy").unwrap();
         let mut old = manager();
         old.load_accounts_from(&account, &legacy).unwrap();
-        assert!(old.verify_password("synthetic-legacy", &old.accounts.read()["admin"].password_hash));
+        assert!(old.verify_password(
+            "synthetic-legacy",
+            &old.accounts.read()["admin"].password_hash
+        ));
     }
-
 }

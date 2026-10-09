@@ -6,7 +6,7 @@ use tracing::{debug, info};
 
 use nanokvm_core::Result;
 
-use crate::i2c::{addresses, I2c};
+use crate::i2c::{I2c, addresses};
 
 /// OLED display width
 pub const DISPLAY_WIDTH: u32 = 128;

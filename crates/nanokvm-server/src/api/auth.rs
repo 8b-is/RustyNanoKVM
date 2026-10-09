@@ -171,16 +171,22 @@ pub async fn account(
     State(state): State<Arc<AppState>>,
     user: Option<axum::Extension<crate::middleware::AuthenticatedUser>>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    if let Some(axum::Extension(user)) = user {
-        if state.auth.has_account(&user.0) {
-            return (StatusCode::OK, Json(serde_json::json!({
+    if let Some(axum::Extension(user)) = user
+        && state.auth.has_account(&user.0)
+    {
+        return (
+            StatusCode::OK,
+            Json(serde_json::json!({
                 "code": 0, "msg": "Success", "data": { "username": user.0 }
-            })));
-        }
+            })),
+        );
     }
-    (StatusCode::UNAUTHORIZED, Json(serde_json::json!({
-        "code": -1, "msg": "Authenticated account unavailable", "data": null
-    })))
+    (
+        StatusCode::UNAUTHORIZED,
+        Json(serde_json::json!({
+            "code": -1, "msg": "Authenticated account unavailable", "data": null
+        })),
+    )
 }
 
 /// Keep expensive default-password checks off async workers and bound concurrency.
@@ -189,24 +195,42 @@ pub async fn password_status(
     user: Option<axum::Extension<crate::middleware::AuthenticatedUser>>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     let Some(axum::Extension(user)) = user else {
-        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"code": -1, "data": null})));
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"code": -1, "data": null})),
+        );
     };
     if !state.auth.has_account(&user.0) {
-        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"code": -1, "data": null})));
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"code": -1, "data": null})),
+        );
     }
     static CHECKS: std::sync::OnceLock<Arc<tokio::sync::Semaphore>> = std::sync::OnceLock::new();
-    let limiter = CHECKS.get_or_init(|| Arc::new(tokio::sync::Semaphore::new(1))).clone();
+    let limiter = CHECKS
+        .get_or_init(|| Arc::new(tokio::sync::Semaphore::new(1)))
+        .clone();
     let Ok(permit) = limiter.try_acquire_owned() else {
-        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"code": -1, "data": null})));
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({"code": -1, "data": null})),
+        );
     };
     let result = tokio::task::spawn_blocking(move || {
         let _permit = permit;
         state.auth.password_updated(&user.0)
-    }).await;
+    })
+    .await;
     match result {
-        Ok(Ok(updated)) => (StatusCode::OK, Json(serde_json::json!({
-            "code": 0, "msg": "Success", "data": { "isUpdated": updated }
-        }))),
-        _ => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"code": -1, "data": null}))),
+        Ok(Ok(updated)) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "code": 0, "msg": "Success", "data": { "isUpdated": updated }
+            })),
+        ),
+        _ => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"code": -1, "data": null})),
+        ),
     }
 }
