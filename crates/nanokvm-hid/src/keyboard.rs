@@ -19,7 +19,10 @@ impl Keyboard {
     /// Send a key press event
     pub fn press(modifier: u8, keys: &[u8]) -> Result<()> {
         let report = Self::build_report(modifier, keys);
-        debug!("Keyboard press: modifier={:#04x}, keys={:?}", modifier, keys);
+        debug!(
+            "Keyboard press: modifier={:#04x}, keys={:?}",
+            modifier, keys
+        );
         crate::hid::Hid::instance().write_keyboard(&report)
     }
 

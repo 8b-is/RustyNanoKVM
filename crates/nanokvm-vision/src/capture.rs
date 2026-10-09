@@ -189,7 +189,7 @@ impl VideoCapture {
         {
             let mut data_ptr: *mut std::os::raw::c_uchar = std::ptr::null_mut();
             let mut data_size: std::os::raw::c_uint = 0;
-            
+
             let enc_type = match encoder {
                 EncoderType::Mjpeg => 0,
                 EncoderType::H264 => 1,
@@ -221,8 +221,8 @@ impl VideoCapture {
                 debug!("kvmv_read_img returned status: {}", res);
                 return Err(Error::vision(format!("Video capture error: {}", res)));
             }
-            
-            let frame_type = CaptureResult::from(res as i32);
+
+            let frame_type = CaptureResult::from(res);
             let bytes = if !data_ptr.is_null() && data_size > 0 {
                 let slice = unsafe { std::slice::from_raw_parts(data_ptr, data_size as usize) };
                 let b = bytes::Bytes::copy_from_slice(slice);

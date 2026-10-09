@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Divider } from 'antd';
+import { Alert, Button, Divider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,13 +12,24 @@ export const Account = () => {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    api.getAccount().then((rsp) => {
-      if (rsp.code === 0) {
+    let cancelled = false;
+    api.getAccount()
+      .then((rsp) => {
+        if (cancelled) return;
+        if (rsp.code !== 0 || typeof rsp.data?.username !== 'string' || !rsp.data.username) {
+          throw new Error('Account unavailable');
+        }
         setUsername(rsp.data.username);
-      }
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function changePassword() {
@@ -31,6 +42,15 @@ export const Account = () => {
       <Divider className="opacity-50" />
 
       <div className="flex flex-col space-y-8">
+        {loadFailed && (
+          <Alert
+            type="warning"
+            showIcon
+            message={t('settings.account.unavailable', {
+              defaultValue: 'Account details are unavailable. Close and reopen settings to try again.'
+            })}
+          />
+        )}
         <div className="flex items-center justify-between">
           <span>{t('settings.account.webAccount')}</span>
           <span>{username ? username : '-'}</span>

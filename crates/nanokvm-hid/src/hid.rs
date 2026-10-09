@@ -118,10 +118,7 @@ impl Hid {
 
         // Re-open if device is closed
         if guard.is_none() {
-            match Self::open_device(path) {
-                Ok(file) => *guard = Some(file),
-                Err(e) => return Err(e),
-            }
+            *guard = Some(Self::open_device(path)?);
         }
 
         if let Some(ref mut file) = *guard {

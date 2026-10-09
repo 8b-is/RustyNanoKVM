@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-import { removeToken } from '@/lib/cookie.ts';
+import { getToken, removeToken } from '@/lib/cookie.ts';
 import { getBaseUrl } from '@/lib/service.ts';
 
 type Response = {
@@ -29,6 +29,8 @@ class Http {
     this.instance.interceptors.request.use((config) => {
       if (config.headers) {
         config.headers.Accept = 'application/json';
+        const token = getToken();
+        if (token) config.headers.Authorization = `Bearer ${token}`;
       }
 
       return config;
@@ -39,9 +41,11 @@ class Http {
         return response.data;
       },
       (error) => {
-        console.log(error);
+        // Axios errors can include request bodies and Authorization headers.
         const code = error.response?.status;
-        if (code === 401) {
+        // A rejected login belongs to the form; do not reload away its error.
+        const isLoginRequest = error.config?.url === '/api/auth/login';
+        if (code === 401 && !isLoginRequest) {
           removeToken();
           window.location.reload();
         }
