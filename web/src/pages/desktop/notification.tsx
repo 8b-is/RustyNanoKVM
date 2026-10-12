@@ -15,11 +15,32 @@ export const Notification = () => {
     const skip = getSkipModifyPassword();
     if (skip) return;
 
-    isPasswordUpdated().then((rsp) => {
-      if (rsp.code === 0 && !rsp.data.isUpdated) {
-        openNotification();
-      }
-    });
+    let cancelled = false;
+    isPasswordUpdated()
+      .then((rsp) => {
+        if (cancelled) return;
+        if (rsp.code !== 0 || typeof rsp.data?.isUpdated !== 'boolean') {
+          throw new Error('Password status unavailable');
+        }
+        if (!rsp.data.isUpdated) openNotification();
+      })
+      .catch(() => {
+        if (cancelled) return;
+        api.warning({
+          key: 'password_status_unavailable',
+          message: t('auth.passwordStatusUnavailable', {
+            defaultValue: 'Could not check password status'
+          }),
+          description: t('auth.passwordStatusUnavailableDesc', {
+            defaultValue: 'Your password status is unknown. Check your connection and try again later.'
+          }),
+          placement: 'topRight',
+          duration: null
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function openNotification() {

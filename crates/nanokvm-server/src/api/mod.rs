@@ -18,13 +18,13 @@ use axum::{
 use crate::state::AppState;
 
 /// Create the API router
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router(state: Arc<AppState>) -> Router<Arc<AppState>> {
     Router::new()
         // Auth routes
-        .route("/auth/login", post(auth::login))
+        .route("/auth/account", get(auth::account))
         .route("/auth/logout", post(auth::logout))
-        .route("/auth/refresh", post(auth::refresh))
         .route("/auth/password", post(auth::change_password))
+        .route("/auth/password", get(auth::password_status))
         // Application routes
         .route("/application/info", get(application::info))
         .route("/application/version", get(application::version))
@@ -49,4 +49,11 @@ pub fn router() -> Router<Arc<AppState>> {
         // Network routes
         .route("/network/ip", get(network::get_ip))
         .route("/network/hostname", get(network::get_hostname))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state,
+            crate::middleware::auth_middleware,
+        ))
+        // Login and refresh authenticate their own request bodies.
+        .route("/auth/login", post(auth::login))
+        .route("/auth/refresh", post(auth::refresh))
 }

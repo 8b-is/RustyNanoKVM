@@ -6,13 +6,13 @@ import { useNavigate } from 'react-router-dom';
 
 import * as api from '@/api/auth.ts';
 import { removeToken } from '@/lib/cookie.ts';
-import { encrypt } from '@/lib/encrypt.ts';
 import { Head } from '@/components/head.tsx';
 
 export const Password = () => {
   const { t } = useTranslation();
   const [msg, setMsg] = useState('');
   const navigate = useNavigate();
+  const isRustBackend = import.meta.env.VITE_AUTH_BACKEND === 'rust';
 
   useEffect(() => {
     if (msg) {
@@ -35,10 +35,10 @@ export const Password = () => {
     }
 
     const username = values.username;
-    const password = encrypt(values.password);
+    const password = values.password;
 
     api
-      .changePassword(username, password)
+      .changePassword(username, password, values.oldPassword)
       .then((rsp: any) => {
         if (rsp.code !== 0) {
           setMsg(t('auth.error'));
@@ -80,6 +80,20 @@ export const Password = () => {
           >
             <Input prefix={<UserOutlined />} placeholder={t('auth.placeholderUsername')} />
           </Form.Item>
+
+          {isRustBackend && (
+            <Form.Item
+              name="oldPassword"
+              rules={[{ required: true, message: t('auth.noEmptyPassword') }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                autoComplete="current-password"
+                aria-label={t('auth.currentPassword', { defaultValue: 'Current password' })}
+                placeholder={t('auth.currentPassword', { defaultValue: 'Current password' })}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item
             name="password"

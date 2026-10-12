@@ -2,7 +2,6 @@
 //!
 //! HTTP/WebSocket server for remote KVM access.
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::Router;
@@ -14,6 +13,7 @@ mod auth;
 mod logger;
 mod middleware;
 mod state;
+mod transport;
 mod websocket;
 
 use state::AppState;
@@ -28,6 +28,30 @@ async fn main() {
 
     info!("NanoKVM Server v{}", VERSION);
 
+    // Read a snapshot without holding the global lock during certificate I/O.
+    let config = match nanokvm_core::Config::try_instance() {
+        Ok(config) => config.read().clone(),
+        Err(error) => {
+            error!("Server configuration failed: {}", error);
+            std::process::exit(1);
+        }
+    };
+    let transport = match transport::PreparedTransport::prepare(
+        &config.proto,
+        config.port.http,
+        config.port.https,
+        &config.cert.crt,
+        &config.cert.key,
+    )
+    .await
+    {
+        Ok(transport) => transport,
+        Err(error) => {
+            error!("Server transport initialization failed: {}", error);
+            std::process::exit(1);
+        }
+    };
+
     // Initialize application state
     let state = match AppState::new() {
         Ok(s) => Arc::new(s),
@@ -40,21 +64,15 @@ async fn main() {
     // Create router with all routes
     let app = create_router(state.clone());
 
-    // Get server address from config
-    let http_port = nanokvm_core::Config::instance().read().port.http;
-    let addr: SocketAddr = format!("0.0.0.0:{}", http_port)
-        .parse()
-        .expect("Invalid server address");
-
-    info!("Starting server on {}", addr);
-
-    // Start server with graceful shutdown
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .unwrap();
+    info!(
+        "Starting {} server on {}",
+        config.proto,
+        transport.address()
+    );
+    if let Err(error) = transport.serve(app, shutdown_signal()).await {
+        error!("Server failed: {}", error);
+        std::process::exit(1);
+    }
 
     info!("Server shutdown complete");
 }
@@ -83,8 +101,14 @@ fn create_router(state: Arc<AppState>) -> Router {
     let static_files = ServeDir::new("web").not_found_service(ServeDir::new("web/index.html"));
 
     Router::new()
-        .nest("/api", api::router())
-        .nest("/ws", websocket::router())
+        .nest("/api", api::router(state.clone()))
+        .nest(
+            "/ws",
+            websocket::router().route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                middleware::websocket_auth_middleware,
+            )),
+        )
         .fallback_service(static_files)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

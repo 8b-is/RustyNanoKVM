@@ -15,7 +15,11 @@ export function getToken() {
 }
 
 export function setToken(token: string) {
-  Cookies.set(COOKIE_TOKEN_KEY, token, { expires: 30 });
+  Cookies.set(COOKIE_TOKEN_KEY, token, {
+    expires: 30,
+    secure: window.location.protocol === 'https:',
+    sameSite: 'lax'
+  });
 }
 
 export function removeToken() {
