@@ -280,8 +280,10 @@ mod transport_config_tests {
 
     #[test]
     fn invalid_protocol_is_not_silently_downgraded() {
-        let mut config = Config::default();
-        config.proto = "HTTPS".into();
+        let mut config = Config {
+            proto: "HTTPS".into(),
+            ..Default::default()
+        };
         assert!(config.validate().is_err());
         assert_eq!(config.proto, "HTTPS");
     }
@@ -289,8 +291,10 @@ mod transport_config_tests {
     #[test]
     fn explicit_protocols_survive_validation() {
         for protocol in ["http", "https"] {
-            let mut config = Config::default();
-            config.proto = protocol.into();
+            let mut config = Config {
+                proto: protocol.into(),
+                ..Default::default()
+            };
             config.validate().unwrap();
             assert_eq!(config.proto, protocol);
         }
