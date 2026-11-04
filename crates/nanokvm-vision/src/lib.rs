@@ -7,7 +7,7 @@ pub mod capture;
 pub mod encoder;
 pub mod hdmi;
 
-#[cfg(not(feature = "mock"))]
+#[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
 pub mod ffi;
 
 pub use capture::VideoCapture;

@@ -121,7 +121,7 @@ impl VideoCapture {
             return Ok(());
         }
 
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             unsafe {
                 crate::ffi::kvmv_init(0);
@@ -141,7 +141,7 @@ impl VideoCapture {
             return;
         }
 
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             unsafe { crate::ffi::kvmv_deinit() };
         }
@@ -174,18 +174,18 @@ impl VideoCapture {
         }
 
         // In a real implementation, this would call kvmv_read_img()
-        // For now, return a mock frame
-        #[cfg(feature = "mock")]
+        // For now, return a mock frame on non-riscv64 or when mock is enabled
+        #[cfg(any(not(target_arch = "riscv64"), feature = "mock"))]
         {
-            return Ok(VideoFrame {
+            Ok(VideoFrame {
                 data: Bytes::from(vec![0xFF, 0xD8, 0xFF, 0xE0]), // JPEG magic bytes
                 frame_type: CaptureResult::Mjpeg,
                 width,
                 height,
-            });
+            })
         }
 
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             let mut data_ptr: *mut std::os::raw::c_uchar = std::ptr::null_mut();
             let mut data_size: std::os::raw::c_uint = 0;
@@ -253,7 +253,7 @@ impl VideoCapture {
 
     /// Enable or disable HDMI input
     pub fn set_hdmi_enabled(&mut self, enabled: bool) -> Result<()> {
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             unsafe { crate::ffi::kvmv_hdmi_control(if enabled { 1 } else { 0 }) };
         }
@@ -275,7 +275,7 @@ impl VideoCapture {
     pub fn set_gop(&mut self, gop: u8) {
         self.gop = gop;
 
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             unsafe { crate::ffi::set_h264_gop(gop) };
         }
@@ -287,7 +287,7 @@ impl VideoCapture {
     pub fn set_frame_detect(&mut self, value: u8) {
         self.frame_detect = value;
 
-        #[cfg(not(feature = "mock"))]
+        #[cfg(all(target_arch = "riscv64", not(feature = "mock")))]
         {
             unsafe { crate::ffi::set_frame_detact(value) };
         }
