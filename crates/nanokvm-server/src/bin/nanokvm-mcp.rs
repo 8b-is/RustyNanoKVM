@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
-//! `nanokvm-mcp` — Model Context Protocol (MCP) Server & CLI for `RustyNanoKVM` (`ayekvm` @ `172.16.47.103`).
+//! `nanokvm-mcp` — Model Context Protocol (MCP) Server & CLI for `RustyNanoKVM` (`rustykvm` / `ayekvm`).
 //!
-//! Connects to a live `RustyNanoKVM` appliance over HTTP (`172.16.47.103:80`), captures the
+//! Connects to a live `RustyNanoKVM` appliance over HTTP (`rustykvm:80` / `ayekvm:80`), captures the
 //! 1080p HDMI frame + audio state, runs the **Balanced Ternary (`{-1, 0, +1}`, Base-243 29-byte)**
 //! Video Capture Model, **PhoeniX `.8a∞` (`0x38 0x61 0xE2 0x9E`)** Audio Context Model, and
 //! **Smart-Tree × MemNet (`MemnetCapsule64` `0x4D4E` + `WaveFrame79` `MEM|8` v2 + file tree/read/search)**,
@@ -10,8 +10,9 @@
 //! Strict 8b-is No-Float Law: 100% integer, balanced ternary `{-1, 0, +1}`, and reduced `p/q` rationals.
 
 use std::env;
+use std::fs;
 use std::io::{BufRead, Read, Write};
-use std::net::{SocketAddr, TcpStream};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::Path;
 use std::time::Duration;
 
@@ -22,16 +23,109 @@ use nanokvm_core::memnet::{
 use nanokvm_vision::{TernaryMcpContextPacket, TernaryVideoAnalyzer};
 use serde_json::{Value, json};
 
-/// Default `RustyNanoKVM` (`ayekvm`) host:port on the local mesh.
-pub const DEFAULT_KVM_ADDR: &str = "172.16.47.103:80";
+/// Default `RustyNanoKVM` (`rustykvm` / `ayekvm`) hostname:port on the local mesh.
+pub const DEFAULT_KVM_ADDR: &str = "rustykvm:80";
+
+/// Look up a `HostName` mapping for `alias` inside `$HOME/.ssh/config` if DNS / `/etc/hosts`
+/// does not define the bare hostname directly.
+fn resolve_ssh_config_hostname(alias: &str) -> Option<String> {
+    let home = env::var("HOME").ok()?;
+    let cfg = fs::read_to_string(Path::new(&home).join(".ssh/config")).ok()?;
+    let mut in_matching_host = false;
+    for raw_line in cfg.lines() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.split_whitespace();
+        let Some(keyword) = parts.next() else {
+            continue;
+        };
+        if keyword.eq_ignore_ascii_case("Host") {
+            in_matching_host = parts.any(|pattern| pattern.eq_ignore_ascii_case(alias));
+        } else if in_matching_host && keyword.eq_ignore_ascii_case("HostName") {
+            if let Some(target) = parts.next() {
+                return Some(target.to_string());
+            }
+        }
+    }
+    None
+}
+
+/// Resolve a `host` or `host:port` string to a `SocketAddr` via DNS, `/etc/hosts`, `~/.ssh/config`, or `.local` mDNS.
+pub fn resolve_kvm_socket_addr(addr_str: &str) -> Result<SocketAddr, String> {
+    let trimmed = addr_str.trim();
+    let (host, port) = match trimmed.rsplit_once(':') {
+        Some((h, p)) => (h, p.parse::<u16>().unwrap_or(80)),
+        None => (trimmed, 80u16),
+    };
+
+    if let Ok(mut iter) = (host, port).to_socket_addrs() {
+        if let Some(addr) = iter.next() {
+            return Ok(addr);
+        }
+    }
+
+    if let Some(ssh_target) = resolve_ssh_config_hostname(host) {
+        if let Ok(mut iter) = (ssh_target.as_str(), port).to_socket_addrs() {
+            if let Some(addr) = iter.next() {
+                return Ok(addr);
+            }
+        }
+    }
+
+    if !host.ends_with(".local") {
+        let mdns_host = format!("{host}.local");
+        if let Ok(mut iter) = (mdns_host.as_str(), port).to_socket_addrs() {
+            if let Some(addr) = iter.next() {
+                return Ok(addr);
+            }
+        }
+    }
+
+    Err(format!("unable to resolve host '{addr_str}' via DNS, /etc/hosts, ~/.ssh/config, or mDNS"))
+}
+
+/// Decode an HTTP `Transfer-Encoding: chunked` body into contiguous raw bytes.
+fn decode_chunked_body(body: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(body.len());
+    let mut idx = 0usize;
+    while idx < body.len() {
+        let Some(rel_end) = body[idx..].windows(2).position(|w| w == b"\r\n") else {
+            break;
+        };
+        let len_line = &body[idx..idx + rel_end];
+        let hex_str = core::str::from_utf8(len_line)
+            .unwrap_or("")
+            .split(';')
+            .next()
+            .unwrap_or("")
+            .trim();
+        let Ok(chunk_len) = usize::from_str_radix(hex_str, 16) else {
+            break;
+        };
+        idx += rel_end + 2;
+        if chunk_len == 0 || idx + chunk_len > body.len() {
+            break;
+        }
+        out.extend_from_slice(&body[idx..idx + chunk_len]);
+        idx += chunk_len;
+        if idx + 2 <= body.len() && &body[idx..idx + 2] == b"\r\n" {
+            idx += 2;
+        }
+    }
+    if out.is_empty() {
+        body.to_vec()
+    } else {
+        out
+    }
+}
 
 /// Perform a minimal zero-float HTTP/1.1 GET request and return the raw response body bytes.
 pub fn http_get_bytes(addr_str: &str, path: &str) -> Result<Vec<u8>, String> {
-    let addr: SocketAddr = addr_str
-        .parse()
-        .map_err(|e| format!("invalid address {addr_str}: {e}"))?;
+    let addr = resolve_kvm_socket_addr(addr_str)?;
     let mut stream = TcpStream::connect_timeout(&addr, Duration::from_millis(2500))
-        .map_err(|e| format!("connect {addr_str} failed: {e}"))?;
+        .map_err(|e| format!("connect {addr_str} ({addr}) failed: {e}"))?;
     let _ = stream.set_read_timeout(Some(Duration::from_millis(3000)));
     let _ = stream.set_write_timeout(Some(Duration::from_millis(2000)));
 
@@ -48,7 +142,13 @@ pub fn http_get_bytes(addr_str: &str, path: &str) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("read failed: {e}"))?;
 
     if let Some(pos) = raw.windows(4).position(|w| w == b"\r\n\r\n") {
-        Ok(raw[pos + 4..].to_vec())
+        let hdr_str = String::from_utf8_lossy(&raw[..pos]).to_ascii_lowercase();
+        let body = &raw[pos + 4..];
+        if hdr_str.contains("transfer-encoding: chunked") {
+            Ok(decode_chunked_body(body))
+        } else {
+            Ok(body.to_vec())
+        }
     } else {
         Err("missing HTTP header separator".to_string())
     }
@@ -56,11 +156,9 @@ pub fn http_get_bytes(addr_str: &str, path: &str) -> Result<Vec<u8>, String> {
 
 /// Perform a minimal HTTP/1.1 POST request with a JSON body.
 pub fn http_post_json(addr_str: &str, path: &str, body_json: &str) -> Result<String, String> {
-    let addr: SocketAddr = addr_str
-        .parse()
-        .map_err(|e| format!("invalid address {addr_str}: {e}"))?;
+    let addr = resolve_kvm_socket_addr(addr_str)?;
     let mut stream = TcpStream::connect_timeout(&addr, Duration::from_millis(2500))
-        .map_err(|e| format!("connect {addr_str} failed: {e}"))?;
+        .map_err(|e| format!("connect {addr_str} ({addr}) failed: {e}"))?;
     let _ = stream.set_read_timeout(Some(Duration::from_millis(2500)));
     let _ = stream.set_write_timeout(Some(Duration::from_millis(2000)));
 
@@ -140,13 +238,13 @@ fn build_tools_list() -> Value {
         "tools": [
             {
                 "name": "rustykvm_get_ternary_context",
-                "description": "Capture the live 1080p HDMI video frame, PhoeniX .8a audio state, and 64-byte MemNet Capsule (0x4D4E) + 79-byte WaveFrame79 from RustyNanoKVM (ayekvm @ 172.16.47.103).",
+                "description": "Capture the live 1080p HDMI video frame, 80x25 LLM screen transcription buffer, PhoeniX .8a audio state, and 64-byte MemNet Capsule (0x4D4E) + 79-byte WaveFrame79 from RustyNanoKVM (rustykvm / ayekvm).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "host": {
                             "type": "string",
-                            "description": "Optional RustyNanoKVM host:port (defaults to 172.16.47.103:80)"
+                            "description": "Optional RustyNanoKVM host:port (defaults to rustykvm:80)"
                         }
                     }
                 }
@@ -163,7 +261,7 @@ fn build_tools_list() -> Value {
                         },
                         "host": {
                             "type": "string",
-                            "description": "Optional RustyNanoKVM host:port (defaults to 172.16.47.103:80)"
+                            "description": "Optional RustyNanoKVM host:port (defaults to rustykvm:80)"
                         }
                     },
                     "required": ["text"]
@@ -181,11 +279,11 @@ fn build_tools_list() -> Value {
                         },
                         "key": {
                             "type": "integer",
-                            "description": "USB HID keycode (e.g. 40 for Enter, 41 for Escape)"
+                            "description": "USB HID keycode (e.g. 40 for Enter, 41 for Escape, 76 for Delete/BIOS)"
                         },
                         "host": {
                             "type": "string",
-                            "description": "Optional RustyNanoKVM host:port (defaults to 172.16.47.103:80)"
+                            "description": "Optional RustyNanoKVM host:port (defaults to rustykvm:80)"
                         }
                     },
                     "required": ["key"]
@@ -264,7 +362,7 @@ fn build_tools_list() -> Value {
                     "properties": {
                         "host": {
                             "type": "string",
-                            "description": "Optional RustyNanoKVM host:port (defaults to 172.16.47.103:80)"
+                            "description": "Optional RustyNanoKVM host:port (defaults to rustykvm:80)"
                         }
                     }
                 }

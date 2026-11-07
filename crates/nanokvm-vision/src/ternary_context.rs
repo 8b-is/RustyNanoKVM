@@ -16,6 +16,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::screen_ocr::{LlmScreenTranscriptBuffer, transcribe_rgb_console_80x25};
+
 /// `.8a∞` Infinity Audio magic header (`0x38 0x61 0xE2 0x9E`).
 pub const EIGHT_A_MAGIC: [u8; 4] = [0x38, 0x61, 0xE2, 0x9E];
 
@@ -301,6 +303,12 @@ pub struct TernaryMcpContextPacket {
     pub temporal_base243_hex: String,
     /// Compact `16×9` visual ternary map (`'█' = +1`, `'▒' = 0`, `'·' = -1`) for direct LLM/MCP reading.
     pub visual_trit_map: Vec<String>,
+    /// Live `80×25` console text lines transcribed directly from the HDMI frame (0 floats, 4-bit L2).
+    pub transcribed_lines: Vec<String>,
+    /// Rolling C64 ring buffer of recent screen state diffs / command outputs for LLM context.
+    pub llm_context_buffer: Vec<String>,
+    /// Ready-to-feed LLM context digest combining ternary vision, `.8a∞` audio, and transcribed screen text.
+    pub llm_prompt_digest: String,
     pub audio: TernaryAudioContext,
 }
 
@@ -310,6 +318,7 @@ pub struct TernaryVideoAnalyzer {
     pub frame_seq: u64,
     pub prev_luma_grid: [u8; TERNARY_GRID_CELLS],
     pub has_prev_frame: bool,
+    pub transcript_buffer: LlmScreenTranscriptBuffer,
 }
 
 impl Default for TernaryVideoAnalyzer {
@@ -324,6 +333,7 @@ impl TernaryVideoAnalyzer {
             frame_seq: 0,
             prev_luma_grid: [0u8; TERNARY_GRID_CELLS],
             has_prev_frame: false,
+            transcript_buffer: LlmScreenTranscriptBuffer::new(),
         }
     }
 
@@ -340,13 +350,31 @@ impl TernaryVideoAnalyzer {
         let mut edge_span = [0u8; TERNARY_GRID_CELLS];
         let mut width: u16 = 1920;
         let mut height: u16 = 1080;
+        let mut transcribed_lines = Vec::new();
 
-        if let Ok(img) = image::load_from_memory(jpeg_bytes) {
+        let sanitized_cow: std::borrow::Cow<'_, [u8]> = if jpeg_bytes.len() > 10
+            && jpeg_bytes[0] == 0xFF
+            && jpeg_bytes[1] == 0xD8
+            && jpeg_bytes[2] == 0xFF
+            && jpeg_bytes[3] == 0xE9
+            && jpeg_bytes[4] == 0x00
+            && jpeg_bytes[5] == 0x04
+        {
+            let mut v = Vec::with_capacity(jpeg_bytes.len() - 6);
+            v.extend_from_slice(&[0xFF, 0xD8]);
+            v.extend_from_slice(&jpeg_bytes[8..]);
+            std::borrow::Cow::Owned(v)
+        } else {
+            std::borrow::Cow::Borrowed(jpeg_bytes)
+        };
+
+        if let Ok(img) = image::load_from_memory(&sanitized_cow) {
             let rgb = img.to_rgb8();
             let w = rgb.width() as usize;
             let h = rgb.height() as usize;
             width = w.min(65535) as u16;
             height = h.min(65535) as u16;
+            transcribed_lines = transcribe_rgb_console_80x25(&rgb);
 
             if w >= TERNARY_GRID_COLS && h >= TERNARY_GRID_ROWS {
                 let tile_w = w / TERNARY_GRID_COLS;
@@ -531,6 +559,18 @@ impl TernaryVideoAnalyzer {
         }
 
         let audio = TernaryAudioContext::from_pcm_i16(pcm_audio);
+        let llm_context_buffer = self
+            .transcript_buffer
+            .ingest_transcribed_lines(self.frame_seq, &transcribed_lines);
+        let llm_prompt_digest = format!(
+            "[AyeKVM LLM Context | seq={} | class={} | salience={} | active={}/144 | audio={}]\n{}",
+            self.frame_seq,
+            semantic_class.as_str(),
+            format_reduced_pq(raw_salience, 1024),
+            active_glyph_cells,
+            audio.active_opcode_hex,
+            transcribed_lines.join("\n")
+        );
 
         TernaryMcpContextPacket {
             frame_seq: self.frame_seq,
@@ -549,6 +589,9 @@ impl TernaryVideoAnalyzer {
             spatial_base243_hex: bytes_to_hex(&spatial_packed),
             temporal_base243_hex: bytes_to_hex(&temporal_packed),
             visual_trit_map,
+            transcribed_lines,
+            llm_context_buffer,
+            llm_prompt_digest,
             audio,
         }
     }

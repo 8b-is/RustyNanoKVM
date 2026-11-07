@@ -353,7 +353,7 @@ impl Default for MemnetCapsule64 {
     fn default() -> Self {
         Self {
             version: 1,
-            node_id: 103, // 172.16.47.103 (`ayekvm`)
+            node_id: 103, // `ayekvm` / `rustykvm` MemNet node ID
             node_trit: 1,
             transport_mask: 0x02, // Ethernet/WiFi
             seed_class: 1,
@@ -365,7 +365,7 @@ impl Default for MemnetCapsule64 {
             rf_ap_count: 4,
             imu_motion_mg: 0,
             peer_rssi_dbm: [-40, -45, -50, -48],
-            top_bssid_fnv32: fnv32_1a(b"ayekvm-172.16.47.103"),
+            top_bssid_fnv32: fnv32_1a(b"ayekvm.memnet"),
             top_bssid_rssi_dbm: -40,
             portal_ok: 1,
             wave_b3: "360000eaf".to_string(),

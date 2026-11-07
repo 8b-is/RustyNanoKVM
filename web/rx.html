@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📺 OxiCast Universal Receiver · HDMI / DVI / USB-C DP / Miracast / AirPlay / Chromecast / UPnP</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #05060a;
+      color: #e6edf3;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #0a0d16;
+      border-bottom: 1px solid #1e2638;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .title {
+      color: #62e6c9;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .badge {
+      background: #111827;
+      border: 1px solid #28354e;
+      color: #e8b05c;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .badge.active {
+      color: #62e6c9;
+      border-color: #62e6c9;
+      background: #62e6c91f;
+    }
+    button, a.btn {
+      background: #121826;
+      color: #e6edf3;
+      border: 1px solid #2b3954;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button:hover, a.btn:hover {
+      border-color: #62e6c9;
+      color: #62e6c9;
+    }
+    #rxViewport {
+      flex: 1;
+      background: #020305;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      outline: none;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+    #rxImg {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      display: block;
+      user-select: none;
+    }
+    footer {
+      background: #0a0d16;
+      border-top: 1px solid #1e2638;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #rxStatus { color: #00f0ff; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="title">📺 OXICAST UNIVERSAL RECEIVER STAGE</span>
+      <span class="badge active" id="proto-wupz" onclick="selectProto('wupz', '🍓 Pi4 DRM/KMS &amp; Sovereign WUPZ64 (:8432)')">🍓 Pi DRM/KMS</span>
+      <span class="badge" id="proto-usbcdp" onclick="selectProto('usbcdp', '🔌 USB-C DisplayPort Alt-Mode + Single-Cable Reverse-HID')">🔌 USB-C DP</span>
+      <span class="badge" id="proto-dvi" onclick="selectProto('dvi', '🖥️ DVI-D / HDMI TMDS Direct Scanout')">🖥️ HDMI / DVI</span>
+      <span class="badge" id="proto-miracast" onclick="selectProto('miracast', '📺 Miracast WFD (:7236) + TCP UIBC Mouse/Key Return')">📺 Miracast + UIBC</span>
+      <span class="badge" id="proto-airplay" onclick="selectProto('airplay', '🍎 AirPlay (:7000) + PhoeniX 432Hz Audio')">🍎 AirPlay</span>
+      <span class="badge" id="proto-chromecast" onclick="selectProto('chromecast', '📡 Chromecast CASTV2 (:8009) Receiver Stage')">📡 Chromecast</span>
+      <span class="badge" id="proto-upnp" onclick="selectProto('upnp', '🌐 UPnP / DLNA AVTransport (:1900) Smart TV')">🌐 UPnP / DLNA</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="toggleFullscreen()">⛶ Fullscreen TV</button>
+      <a class="btn" href="/">🦀 Back to AyeKVM Console</a>
+    </div>
+  </header>
+
+  <main id="rxViewport" tabindex="0">
+    <img id="rxImg" src="/api/stream/mjpeg?width=1920&height=1080&quality=85" alt="OxiCast Live Receiver Stream" />
+  </main>
+
+  <footer>
+    <span id="rxStatus">🍓 Active Profile: Pi4 DRM/KMS &amp; Sovereign WUPZ64 (:8432) · Reverse-HID / UIBC Return: ARMED</span>
+    <span id="rxHidTelemetry" style="color:#8b949e;">Click or type on screen to send Reverse-HID / Miracast UIBC to target</span>
+  </footer>
+
+  <script>
+    // Strict 8b-is Law: 100% Integer Arithmetic (0 floats)
+    const viewport = document.getElementById('rxViewport');
+    const rxImg = document.getElementById('rxImg');
+    let activeProto = 'wupz';
+
+    function selectProto(id, desc) {
+      activeProto = id;
+      const ids = ['wupz', 'usbcdp', 'dvi', 'miracast', 'airplay', 'chromecast', 'upnp'];
+      for (let i = 0; i < ids.length; i++) {
+        const el = document.getElementById('proto-' + ids[i]);
+        if (el) el.className = ids[i] === id ? 'badge active' : 'badge';
+      }
+      document.getElementById('rxStatus').textContent =
+        'Active Profile: ' + desc + ' · Reverse-HID / UIBC Return: ARMED';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    viewport.addEventListener('mousedown', async (evt) => {
+      viewport.focus();
+      const rect = rxImg.getBoundingClientRect();
+      const w = Math.max(1, Math.trunc(rect.width));
+      const h = Math.max(1, Math.trunc(rect.height));
+      const relX = Math.max(0, Math.min(w, Math.trunc(evt.clientX - rect.left)));
+      const relY = Math.max(0, Math.min(h, Math.trunc(evt.clientY - rect.top)));
+      const absX = Math.trunc((relX * 32767) / w);
+      const absY = Math.trunc((relY * 32767) / h);
+      const btn = evt.button === 2 ? 2 : (evt.button === 1 ? 4 : 1);
+
+      document.getElementById('rxHidTelemetry').textContent =
+        'Reverse-HID [' + activeProto + '] -> (' + absX + ', ' + absY + ') btn=' + btn;
+      try {
+        await fetch('/api/hid/mouse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'absolute', button: btn | 0, x: absX | 0, y: absY | 0, wheel: 0 })
+        });
+        await fetch('/api/hid/mouse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'absolute', button: 0, x: absX | 0, y: absY | 0, wheel: 0 })
+        });
+      } catch (_) {}
+    });
+
+    const CODE_TO_HID = {
+      KeyA: 4, KeyB: 5, KeyC: 6, KeyD: 7, KeyE: 8, KeyF: 9, KeyG: 10, KeyH: 11,
+      KeyI: 12, KeyJ: 13, KeyK: 14, KeyL: 15, KeyM: 16, KeyN: 17, KeyO: 18, KeyP: 19,
+      KeyQ: 20, KeyR: 21, KeyS: 22, KeyT: 23, KeyU: 24, KeyV: 25, KeyW: 26, KeyX: 27,
+      KeyY: 28, KeyZ: 29,
+      Digit1: 30, Digit2: 31, Digit3: 32, Digit4: 33, Digit5: 34,
+      Digit6: 35, Digit7: 36, Digit8: 37, Digit9: 38, Digit0: 39,
+      Enter: 40, Escape: 41, Backspace: 42, Tab: 43, Space: 44, Delete: 76,
+      ArrowRight: 79, ArrowLeft: 80, ArrowDown: 81, ArrowUp: 82
+    };
+
+    viewport.addEventListener('keydown', async (evt) => {
+      const hid = CODE_TO_HID[evt.code];
+      if (!hid) return;
+      evt.preventDefault();
+      let mod = 0;
+      if (evt.ctrlKey) mod |= 1;
+      if (evt.shiftKey) mod |= 2;
+      if (evt.altKey) mod |= 4;
+      if (evt.metaKey) mod |= 8;
+      document.getElementById('rxHidTelemetry').textContent =
+        'Reverse-HID [' + activeProto + '] Key: ' + evt.key + ' (HID ' + hid + ')';
+      try {
+        await fetch('/api/hid/keyboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modifier: mod | 0, keys: [hid | 0] })
+        });
+      } catch (_) {}
+    });
+  </script>
+</body>
+</html>
