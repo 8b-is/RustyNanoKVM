@@ -1,13 +1,931 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/sipeed.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NanoKVM</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/sipeed.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AyeKVM · Sovereign Desktop &amp; Ternary KVM Console (ayekvm)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #05060a;
+      color: #e6edf3;
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 19px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #0a0d16;
+      border-bottom: 1px solid #1e2638;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #62e6c9;
+      letter-spacing: 1px;
+    }
+    .badge {
+      background: #111827;
+      border: 1px solid #28354e;
+      color: #e8b05c;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-mint {
+      color: #62e6c9;
+      border-color: #62e6c955;
+      background: #62e6c914;
+    }
+    .badge-violet {
+      color: #b48bff;
+      border-color: #b48bff55;
+      background: #b48bff14;
+    }
+    .badge-cyan {
+      color: #00f0ff;
+      border-color: #00f0ff55;
+      background: #00f0ff14;
+    }
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #121826;
+      color: #e6edf3;
+      border: 1px solid #2b3954;
+      border-radius: 6px;
+      padding: 6px 11px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1b253b;
+      border-color: #62e6c9;
+      color: #62e6c9;
+    }
+    button.active {
+      background: #62e6c922;
+      border-color: #62e6c9;
+      color: #62e6c9;
+    }
+    button.warn {
+      border-color: #e8b05c88;
+      color: #e8b05c;
+    }
+    button.danger {
+      border-color: #ff6b8b88;
+      color: #ff6b8b;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 14px;
+      padding: 14px;
+      flex: 1;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: #0a0d16;
+      border: 1px solid #1e2638;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #171e2e;
+      padding-bottom: 8px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #00f0ff;
+    }
+    .screen-stage {
+      position: relative;
+      background: #020305;
+      border: 2px solid #222c42;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 440px;
+      outline: none;
+      cursor: crosshair;
+    }
+    .screen-stage:focus {
+      border-color: #62e6c9;
+      box-shadow: 0 0 0 2px #62e6c933;
+    }
+    #kvmScreenImg {
+      width: 100%;
+      height: auto;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    #ternaryOverlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      pointer-events: none;
+    }
+    #ternaryOverlay.visible {
+      display: grid;
+    }
+    .t-cell {
+      border: 1px solid #62e6c922;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #62e6c9aa;
+    }
+    .t-cell.plus { background: #62e6c924; color: #62e6c9; font-weight: 700; }
+    .t-cell.zero { background: #e8b05c18; color: #e8b05c; }
+    .t-cell.minus { background: #00000033; color: #4b5563; }
+    .focus-banner {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #05060acc;
+      border: 1px solid #2b3954;
+      color: #e8b05c;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .screen-stage:focus .focus-banner {
+      border-color: #62e6c9;
+      color: #62e6c9;
+    }
+    .control-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 220px;
+      background: #05060a;
+      color: #62e6c9;
+      border: 1px solid #2b3954;
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #62e6c9;
+    }
+    .key-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .key-btn {
+      padding: 5px 9px;
+      font-size: 11px;
+      background: #0f1523;
+    }
+    .kv-list {
+      display: grid;
+      grid-template-columns: 125px 1fr;
+      gap: 5px 8px;
+      font-size: 12px;
+    }
+    .kv-key { color: #8b949e; }
+    .kv-val {
+      color: #e6edf3;
+      word-break: break-all;
+      font-weight: 600;
+    }
+    .trit-ascii {
+      background: #05060a;
+      border: 1px solid #1e2638;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 15px;
+      letter-spacing: 3px;
+      color: #62e6c9;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .wave-bars {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 3px;
+      height: 36px;
+      align-items: center;
+      background: #05060a;
+      border: 1px solid #1e2638;
+      border-radius: 6px;
+      padding: 4px;
+    }
+    .w-bar {
+      height: 6px;
+      background: #2b3954;
+      border-radius: 2px;
+    }
+    .w-bar.plus { height: 26px; background: #62e6c9; }
+    .w-bar.zero { height: 10px; background: #e8b05c; }
+    .w-bar.minus { height: 18px; background: #b48bff; }
+    .log-box {
+      background: #05060a;
+      border: 1px solid #1e2638;
+      border-radius: 6px;
+      padding: 8px;
+      height: 120px;
+      overflow-y: auto;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .log-line { margin-bottom: 3px; }
+    .log-ok { color: #62e6c9; }
+    .log-warn { color: #e8b05c; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-title">🦀 AYEKVM · SOVEREIGN DESKTOP CONSOLE</span>
+      <span class="badge badge-mint" id="hdrHost">ayekvm</span>
+      <span class="badge badge-cyan" id="hdrRes">1920x1080 @ 60fps</span>
+      <span class="badge badge-violet" id="hdrClass">class: scanning...</span>
+      <span class="badge" id="hdrLed">PWR: ON</span>
+    </div>
+    <div class="top-controls">
+      <button id="btnModeStream" class="active" onclick="setVideoMode('snapshot')">⚡ Live Poll (350ms)</button>
+      <button id="btnModeMjpeg" onclick="setVideoMode('mjpeg')">🎥 MJPEG Stream</button>
+      <button id="btnTernaryOverlay" onclick="toggleTernaryOverlay()">🔺 16x9 Ternary Overlay</button>
+      <button id="btnAudio" onclick="toggleAudioMonitor()">🔇 PhoeniX 432Hz Audio: OFF</button>
+      <button onclick="refreshFrameNow()">🔄 Snap Now</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🖥️ LIVE HDMI DISPLAY · CLICK SCREEN FOR MOUSE &amp; KEYBOARD CAPTURE</span>
+        <span id="mouseCoords" style="font-size:11px;color:#8b949e;">USB HID Abs: x=0 y=0 | Last Key: none</span>
+      </div>
+
+      <div id="screenStage" class="screen-stage" tabindex="0">
+        <img id="kvmScreenImg" alt="RustyNanoKVM Live HDMI Output" crossorigin="anonymous" />
+        <div id="ternaryOverlay"></div>
+        <div id="focusBanner" class="focus-banner">Click screen to capture keyboard &amp; mouse</div>
+      </div>
+
+      <div class="control-bar">
+        <input id="pasteInput" type="text" placeholder="Type command or text for target machine (e.g. map -r, fs0:, ls, exit)..." />
+        <button class="active" onclick="sendPasteText(true)">⌨️ Type + Enter</button>
+        <button onclick="sendPasteText(false)">📋 Type Only</button>
+      </div>
+
+      <div class="key-grid">
+        <button class="key-btn" onclick="sendHidKey(0, 40, 'Enter')">⏎ Enter</button>
+        <button class="key-btn" onclick="sendHidKey(0, 41, 'Esc')">⎋ Esc</button>
+        <button class="key-btn" onclick="sendHidKey(0, 43, 'Tab')">⇥ Tab</button>
+        <button class="key-btn" onclick="sendHidKey(0, 42, 'Backspace')">⌫ Bksp</button>
+        <button class="key-btn" onclick="sendHidKey(0, 44, 'Space')">␣ Space</button>
+        <button class="key-btn" onclick="sendHidKey(0, 82, 'Up')">↑ Up</button>
+        <button class="key-btn" onclick="sendHidKey(0, 81, 'Down')">↓ Down</button>
+        <button class="key-btn" onclick="sendHidKey(0, 80, 'Left')">← Left</button>
+        <button class="key-btn" onclick="sendHidKey(0, 79, 'Right')">→ Right</button>
+        <button class="key-btn" onclick="sendHidKey(0, 59, 'F2')">F2 (BIOS)</button>
+        <button class="key-btn" onclick="sendHidKey(0, 68, 'F11')">F11 (Boot)</button>
+        <button class="key-btn" onclick="sendHidKey(0, 69, 'F12')">F12</button>
+        <button class="key-btn warn" onclick="sendQuickCommand('fs0:')">UEFI: fs0:</button>
+        <button class="key-btn warn" onclick="sendQuickCommand('ls')">UEFI: ls</button>
+        <button class="key-btn warn" onclick="sendQuickCommand('map -r')">UEFI: map -r</button>
+        <button class="key-btn warn" onclick="sendQuickCommand('exit')">UEFI: exit</button>
+        <button class="key-btn danger" onclick="sendHidKey(5, 76, 'Ctrl+Alt+Del')">⚡ Ctrl+Alt+Del</button>
+        <button class="key-btn warn" onclick="triggerPower('short')">🔌 ATX Power</button>
+        <button class="key-btn danger" onclick="triggerPower('reset')">🔁 ATX Reset</button>
+      </div>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:14px;">
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🔺 BALANCED TERNARY VIDEO ({-1, 0, +1} · 29B BASE-243)</span>
+          <span class="badge badge-mint" id="tritStats">+1:0 0:0 -1:0</span>
+        </div>
+        <div id="tritAsciiMap" class="trit-ascii">················
+················
+················
+················
+················
+················
+················
+················
+················</div>
+        <div class="kv-list">
+          <span class="kv-key">Semantic Class:</span>
+          <span class="kv-val" id="valSemantic">uefi_or_bios_console (15/16)</span>
+          <span class="kv-key">Salience (p/q):</span>
+          <span class="kv-val" id="valSalience">1/1</span>
+          <span class="kv-key">Active BBox:</span>
+          <span class="kv-val" id="valBbox">[0, 0, 15, 8]</span>
+          <span class="kv-key">Base-243 (29B):</span>
+          <span class="kv-val" id="valBase243" style="color:#62e6c9;font-size:11px;">computing...</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🎵 PHOENIX .8a∞ AUDIO &amp; MEMNET CAPSULE (0x4D4E)</span>
+          <span class="badge" id="audioOpcode">0x20_LINEUP</span>
+        </div>
+        <div id="audioWaveBars" class="wave-bars"></div>
+        <div class="kv-list">
+          <span class="kv-key">.8a∞ Magic:</span>
+          <span class="kv-val" style="color:#e8b05c;">3861e29e (0 B/s silence deadband)</span>
+          <span class="kv-key">S / N / T (p/q):</span>
+          <span class="kv-val" id="valAudioSnt">S=0/1 N=0/1 T=0/1</span>
+          <span class="kv-key">MemNet Address:</span>
+          <span class="kv-val" style="color:#b48bff;font-size:11px;">geo:sanctuary + role:kvm.ternary.sg2002</span>
+          <span class="kv-key">Capsule64 (NM):</span>
+          <span class="kv-val" id="valCapsule64" style="color:#00f0ff;font-size:11px;">sealing...</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📜 SOVEREIGN KVM EVENT LOG</span>
+          <button style="padding:2px 7px;font-size:10px;" onclick="clearEventLog()">Clear</button>
+        </div>
+        <div id="eventLog" class="log-box"></div>
+      </section>
+    </aside>
+  </main>
+
+  <canvas id="offscreenCanvas" width="160" height="90" style="display:none;"></canvas>
+
+  <script>
+    // Strict 8b-is Law: 100% Integer, Balanced Ternary {-1, 0, +1}, Base-243, and BigInt FNV-1a.
+    // Zero floating-point literals in application logic.
+    const GRID_COLS = 16;
+    const GRID_ROWS = 9;
+    const GRID_CELLS = 144;
+    const FNV64_BASIS = 14695981039346656037n;
+    const FNV64_PRIME = 1099511628211n;
+    const FNV64_MASK = 18446744073709551615n;
+
+    let videoMode = 'snapshot';
+    let overlayVisible = false;
+    let audioEnabled = false;
+    let audioCtx = null;
+    let frameSeq = 0;
+    let prevLuma = new Int32Array(GRID_CELLS);
+    let hasPrevFrame = false;
+    let snapshotBusy = false;
+
+    const screenStage = document.getElementById('screenStage');
+    const kvmScreenImg = document.getElementById('kvmScreenImg');
+    const ternaryOverlay = document.getElementById('ternaryOverlay');
+    const offscreenCanvas = document.getElementById('offscreenCanvas');
+    const offCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Initialize 16x9 overlay cells and 16 audio wave bars
+    for (let i = 0; i < GRID_CELLS; i++) {
+      const cell = document.createElement('div');
+      cell.className = 't-cell minus';
+      cell.textContent = '·';
+      ternaryOverlay.appendChild(cell);
+    }
+    const audioWaveBars = document.getElementById('audioWaveBars');
+    for (let i = 0; i < 16; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'w-bar';
+      audioWaveBars.appendChild(bar);
+    }
+
+    function addLog(msg, cls) {
+      const box = document.getElementById('eventLog');
+      const div = document.createElement('div');
+      div.className = 'log-line ' + (cls || '');
+      const now = new Date();
+      const ts = String(now.getHours()).padStart(2, '0') + ':' +
+                 String(now.getMinutes()).padStart(2, '0') + ':' +
+                 String(now.getSeconds()).padStart(2, '0');
+      div.textContent = '[' + ts + '] ' + msg;
+      box.prepend(div);
+      while (box.children.length > 60) {
+        box.removeChild(box.lastChild);
+      }
+    }
+
+    function clearEventLog() {
+      document.getElementById('eventLog').innerHTML = '';
+    }
+
+    // Pure-integer Euclidean GCD
+    function gcdInt(a, b) {
+      let x = Math.abs(a | 0);
+      let y = Math.abs(b | 0);
+      if (x === 0) return y === 0 ? 1 : y;
+      if (y === 0) return x;
+      while (y !== 0) {
+        const r = x % y;
+        x = y;
+        y = r;
+      }
+      return x;
+    }
+
+    function formatPq(num, den) {
+      const g = gcdInt(num, den);
+      return String(Math.trunc(num / g)) + '/' + String(Math.trunc(den / g));
+    }
+
+    // Pack 5 balanced trits {-1, 0, +1} -> Base-243 byte (0..242)
+    function pack5TritsBase243(t0, t1, t2, t3, t4) {
+      const u0 = (t0 + 1) | 0;
+      const u1 = (t1 + 1) | 0;
+      const u2 = (t2 + 1) | 0;
+      const u3 = (t3 + 1) | 0;
+      const u4 = (t4 + 1) | 0;
+      return (u0 + 3 * u1 + 9 * u2 + 27 * u3 + 81 * u4) & 255;
+    }
+
+    // Pack 144 trits -> 29 Base-243 bytes -> 58 hex chars
+    function packGrid144Base243Hex(trits) {
+      let hex = '';
+      for (let chunk = 0; chunk < 29; chunk++) {
+        const base = chunk * 5;
+        const t0 = base + 0 < GRID_CELLS ? trits[base + 0] : 0;
+        const t1 = base + 1 < GRID_CELLS ? trits[base + 1] : 0;
+        const t2 = base + 2 < GRID_CELLS ? trits[base + 2] : 0;
+        const t3 = base + 3 < GRID_CELLS ? trits[base + 3] : 0;
+        const t4 = base + 4 < GRID_CELLS ? trits[base + 4] : 0;
+        const b = pack5TritsBase243(t0, t1, t2, t3, t4);
+        hex += b.toString(16).padStart(2, '0');
+      }
+      return hex;
+    }
+
+    // BigInt 64-bit FNV-1a seal for MemnetCapsule64 (0x4D4E)
+    function fnv64Bytes(uint8Arr, len) {
+      let h = FNV64_BASIS;
+      for (let i = 0; i < len; i++) {
+        h ^= BigInt(uint8Arr[i]);
+        h = (h * FNV64_PRIME) & FNV64_MASK;
+      }
+      return h;
+    }
+
+    function buildMemnetCapsule64Hex(seqNum, activeCount, base243Hex) {
+      const buf = new Uint8Array(64);
+      // 0x4D4E ('N','M' little-endian)
+      buf[0] = 78;
+      buf[1] = 77;
+      buf[2] = 1; // version
+      buf[3] = 103; // node_id (172.16.47.103)
+      buf[4] = activeCount > 0 ? 1 : 0; // node_trit
+      buf[5] = 2; // transport_mask
+      buf[6] = 1; // seed_class
+      buf[7] = 2; // dominant_mod
+      buf[8] = seqNum & 255;
+      buf[9] = (seqNum >>> 8) & 255;
+      buf[10] = (seqNum >>> 16) & 255;
+      buf[11] = (seqNum >>> 24) & 255;
+      // audio_f0_hz = 432 (0x01B0)
+      buf[12] = 176;
+      buf[13] = 1;
+      buf[14] = 94; // audio_salience_pct
+      buf[29] = 1; // portal_ok
+      const wavePrefix = base243Hex.slice(0, 9);
+      for (let i = 0; i < wavePrefix.length; i++) {
+        buf[30 + i] = wavePrefix.charCodeAt(i) & 255;
+      }
+      const ssid = 'ayekvm';
+      for (let i = 0; i < ssid.length; i++) {
+        buf[40 + i] = ssid.charCodeAt(i) & 255;
+      }
+      let seal = fnv64Bytes(buf, 56);
+      for (let i = 0; i < 8; i++) {
+        buf[56 + i] = Number(seal & 255n);
+        seal >>= 8n;
+      }
+      let outHex = '';
+      for (let i = 0; i < 64; i++) {
+        outHex += buf[i].toString(16).padStart(2, '0');
+      }
+      return outHex;
+    }
+
+    // Play integer-frequency PhoeniX acoustic tone using WebAudio
+    function playPhoenixTone(freqHz, durationMs) {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AC();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freqHz | 0;
+        // Integer divisor gain: 1 / 16
+        gain.gain.value = 1 / 16;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        setTimeout(() => {
+          try { osc.stop(); osc.disconnect(); } catch (_) {}
+        }, durationMs | 0);
+      } catch (_) {}
+    }
+
+    function updateAudioBars(trits16, isEvent) {
+      const bars = audioWaveBars.children;
+      for (let i = 0; i < 16; i++) {
+        const t = trits16[i] || 0;
+        bars[i].className = t > 0 ? 'w-bar plus' : (t < 0 ? 'w-bar minus' : 'w-bar zero');
+      }
+      const opBadge = document.getElementById('audioOpcode');
+      const sntEl = document.getElementById('valAudioSnt');
+      if (isEvent) {
+        opBadge.textContent = '0x30_EVT_ATOM (432Hz)';
+        opBadge.className = 'badge badge-mint';
+        sntEl.textContent = 'S=15/16 N=1/32 T=3/16';
+      } else {
+        opBadge.textContent = '0x20_LINEUP (0 B/s)';
+        opBadge.className = 'badge';
+        sntEl.textContent = 'S=0/1 N=0/1 T=0/1';
+      }
+    }
+
+    // Analyze current HDMI frame into 16x9 Balanced Ternary {-1, 0, +1} + Base-243
+    function analyzeCurrentFrame() {
+      if (!kvmScreenImg.naturalWidth || !kvmScreenImg.naturalHeight) return;
+      offCtx.drawImage(kvmScreenImg, 0, 0, 160, 90);
+      const imgData = offCtx.getImageData(0, 0, 160, 90).data;
+
+      frameSeq = (frameSeq + 1) | 0;
+      const spatialTrits = new Int8Array(GRID_CELLS);
+      let activeCells = 0;
+      let steadyCells = 0;
+      let darkCells = 0;
+      let changedCells = 0;
+      let minX = GRID_COLS, minY = GRID_ROWS, maxX = 0, maxY = 0;
+
+      const overlayCells = ternaryOverlay.children;
+      let asciiRows = [];
+
+      for (let ty = 0; ty < GRID_ROWS; ty++) {
+        let rowStr = '';
+        for (let tx = 0; tx < GRID_COLS; tx++) {
+          const idx = ty * GRID_COLS + tx;
+          let sumLuma = 0;
+          let minL = 255;
+          let maxL = 0;
+
+          for (let py = 0; py < 10; py += 2) {
+            for (let px = 0; px < 10; px += 2) {
+              const x = tx * 10 + px;
+              const y = ty * 10 + py;
+              const p = (y * 160 + x) * 4;
+              const r = imgData[p];
+              const g = imgData[p + 1];
+              const b = imgData[p + 2];
+              const luma = (77 * r + 150 * g + 29 * b) >> 8;
+              sumLuma += luma;
+              if (luma < minL) minL = luma;
+              if (luma > maxL) maxL = luma;
+            }
+          }
+
+          const meanL = Math.trunc(sumLuma / 25);
+          const spanL = maxL - minL;
+          let trit = -1;
+          if (spanL >= 42 || meanL >= 110) {
+            trit = 1;
+            activeCells++;
+            if (tx < minX) minX = tx;
+            if (ty < minY) minY = ty;
+            if (tx > maxX) maxX = tx;
+            if (ty > maxY) maxY = ty;
+          } else if (meanL >= 24) {
+            trit = 0;
+            steadyCells++;
+          } else {
+            trit = -1;
+            darkCells++;
+          }
+
+          spatialTrits[idx] = trit;
+          if (hasPrevFrame && Math.abs(meanL - prevLuma[idx]) >= 14) {
+            changedCells++;
+          }
+          prevLuma[idx] = meanL;
+
+          const ch = trit > 0 ? '█' : (trit === 0 ? '▒' : '·');
+          rowStr += ch;
+          if (overlayCells[idx]) {
+            overlayCells[idx].className = trit > 0 ? 't-cell plus' : (trit === 0 ? 't-cell zero' : 't-cell minus');
+            overlayCells[idx].textContent = ch;
+          }
+        }
+        asciiRows.push(rowStr);
+      }
+      hasPrevFrame = true;
+
+      let semClass = 'terminal_or_code_workspace';
+      let confPq = '7/8';
+      if (activeCells === 0 && steadyCells <= 4) {
+        semClass = 'blank_or_sleeping_display';
+        confPq = '15/16';
+      } else if (darkCells >= 64 && activeCells >= 8 && steadyCells <= 24) {
+        semClass = 'uefi_or_bios_console';
+        confPq = '15/16';
+      } else if (steadyCells >= 36 && activeCells >= 24) {
+        semClass = 'graphical_desktop_or_video';
+        confPq = '7/8';
+      }
+
+      const base243Hex = packGrid144Base243Hex(spatialTrits);
+      const cap64Hex = buildMemnetCapsule64Hex(frameSeq, activeCells, base243Hex);
+
+      document.getElementById('tritAsciiMap').textContent = asciiRows.join('\n');
+      document.getElementById('tritStats').textContent =
+        '+1:' + activeCells + ' 0:' + steadyCells + ' -1:' + darkCells + ' Δ:' + changedCells;
+      document.getElementById('valSemantic').textContent = semClass + ' (' + confPq + ')';
+      document.getElementById('hdrClass').textContent = semClass + ' (' + confPq + ')';
+      const salNum = Math.min(144, activeCells + changedCells * 2);
+      document.getElementById('valSalience').textContent = formatPq( Math.max(1, salNum), 144 );
+      const bbox = activeCells > 0 ? [minX, minY, maxX, maxY] : [0, 0, 0, 0];
+      document.getElementById('valBbox').textContent = '[' + bbox.join(', ') + ']';
+      document.getElementById('valBase243').textContent = base243Hex;
+      document.getElementById('valCapsule64').textContent = cap64Hex;
+
+      const wave16 = [];
+      for (let i = 0; i < 16; i++) {
+        wave16.push(spatialTrits[(i * 9) % GRID_CELLS]);
+      }
+      updateAudioBars(wave16, changedCells > 0);
+      if (changedCells > 2) {
+        playPhoenixTone(432 + (changedCells * 6), 55);
+      }
+    }
+
+    kvmScreenImg.addEventListener('load', () => {
+      analyzeCurrentFrame();
+      snapshotBusy = false;
+    });
+    kvmScreenImg.addEventListener('error', () => {
+      snapshotBusy = false;
+    });
+
+    function refreshFrameNow() {
+      if (videoMode === 'mjpeg') return;
+      if (snapshotBusy) return;
+      snapshotBusy = true;
+      kvmScreenImg.src = '/api/stream/snapshot?width=1920&height=1080&quality=80&t=' + Date.now();
+    }
+
+    function setVideoMode(mode) {
+      videoMode = mode;
+      document.getElementById('btnModeStream').className = mode === 'snapshot' ? 'active' : '';
+      document.getElementById('btnModeMjpeg').className = mode === 'mjpeg' ? 'active' : '';
+      if (mode === 'mjpeg') {
+        kvmScreenImg.src = '/api/stream/mjpeg?width=1920&height=1080&quality=80';
+        addLog('Switched to live multipart MJPEG stream (/api/stream/mjpeg)', 'log-ok');
+      } else {
+        snapshotBusy = false;
+        refreshFrameNow();
+        addLog('Switched to low-latency snapshot polling + ternary analyzer', 'log-ok');
+      }
+    }
+
+    function toggleTernaryOverlay() {
+      overlayVisible = !overlayVisible;
+      ternaryOverlay.className = overlayVisible ? 'visible' : '';
+      document.getElementById('btnTernaryOverlay').className = overlayVisible ? 'active' : '';
+    }
+
+    function toggleAudioMonitor() {
+      audioEnabled = !audioEnabled;
+      const btn = document.getElementById('btnAudio');
+      if (audioEnabled) {
+        btn.textContent = '🔊 PhoeniX 432Hz Audio: ON';
+        btn.className = 'active';
+        playPhoenixTone(432, 120);
+        addLog('PhoeniX .8a∞ 432Hz WebAudio synthesizer enabled', 'log-ok');
+      } else {
+        btn.textContent = '🔇 PhoeniX 432Hz Audio: OFF';
+        btn.className = '';
+        addLog('PhoeniX .8a∞ audio monitor muted (0x20_LINEUP)', '');
+      }
+    }
+
+    // USB HID Mouse click & movement (pure integer 0..32767 scaling)
+    function computeAbsCoords(evt) {
+      const rect = kvmScreenImg.getBoundingClientRect();
+      const w = Math.max(1, Math.trunc(rect.width));
+      const h = Math.max(1, Math.trunc(rect.height));
+      const relX = Math.max(0, Math.min(w, Math.trunc(evt.clientX - rect.left)));
+      const relY = Math.max(0, Math.min(h, Math.trunc(evt.clientY - rect.top)));
+      const absX = Math.trunc((relX * 32767) / w);
+      const absY = Math.trunc((relY * 32767) / h);
+      return { absX, absY };
+    }
+
+    async function sendHidMouse(buttonMask, absX, absY, wheelDelta) {
+      document.getElementById('mouseCoords').textContent =
+        'USB HID Abs: x=' + absX + ' y=' + absY + ' btn=' + buttonMask;
+      try {
+        await fetch('/api/hid/mouse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'absolute',
+            button: buttonMask | 0,
+            x: absX | 0,
+            y: absY | 0,
+            wheel: wheelDelta | 0
+          })
+        });
+      } catch (_) {}
+    }
+
+    screenStage.addEventListener('mousedown', async (evt) => {
+      screenStage.focus();
+      const { absX, absY } = computeAbsCoords(evt);
+      const btn = evt.button === 2 ? 2 : (evt.button === 1 ? 4 : 1);
+      await sendHidMouse(btn, absX, absY, 0);
+      await sendHidMouse(0, absX, absY, 0);
+      playPhoenixTone(486, 40);
+      addLog('Mouse click sent -> (' + absX + ', ' + absY + ') btn=' + btn, 'log-ok');
+      setTimeout(refreshFrameNow, 120);
+    });
+
+    screenStage.addEventListener('contextmenu', (evt) => evt.preventDefault());
+
+    // Browser Keyboard Event -> USB HID Keycode translation
+    const CODE_TO_HID = {
+      KeyA: 4, KeyB: 5, KeyC: 6, KeyD: 7, KeyE: 8, KeyF: 9, KeyG: 10, KeyH: 11,
+      KeyI: 12, KeyJ: 13, KeyK: 14, KeyL: 15, KeyM: 16, KeyN: 17, KeyO: 18, KeyP: 19,
+      KeyQ: 20, KeyR: 21, KeyS: 22, KeyT: 23, KeyU: 24, KeyV: 25, KeyW: 26, KeyX: 27,
+      KeyY: 28, KeyZ: 29,
+      Digit1: 30, Digit2: 31, Digit3: 32, Digit4: 33, Digit5: 34,
+      Digit6: 35, Digit7: 36, Digit8: 37, Digit9: 38, Digit0: 39,
+      Enter: 40, Escape: 41, Backspace: 42, Tab: 43, Space: 44,
+      Minus: 45, Equal: 46, BracketLeft: 47, BracketRight: 48, Backslash: 49,
+      Semicolon: 51, Quote: 52, Backquote: 53, Comma: 54, Period: 55, Slash: 56,
+      F1: 58, F2: 59, F3: 60, F4: 61, F5: 62, F6: 63,
+      F7: 64, F8: 65, F9: 66, F10: 67, F11: 68, F12: 69,
+      Insert: 73, Home: 74, PageUp: 75, Delete: 76, End: 77, PageDown: 78,
+      ArrowRight: 79, ArrowLeft: 80, ArrowDown: 81, ArrowUp: 82
+    };
+
+    async function sendHidKey(modifier, keycode, label) {
+      document.getElementById('mouseCoords').textContent =
+        'Last Key: ' + (label || keycode) + ' (mod=' + modifier + ' hid=' + keycode + ')';
+      playPhoenixTone(528, 35);
+      updateAudioBars([1, -1, 1, 0, 1, -1, 1, 0, 1, 0, -1, 1, 0, 1, -1, 1], true);
+      try {
+        await fetch('/api/hid/keyboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modifier: modifier | 0, keys: [keycode | 0] })
+        });
+        addLog('Key sent: ' + (label || keycode) + ' (HID ' + keycode + ', mod ' + modifier + ')', 'log-ok');
+        setTimeout(refreshFrameNow, 120);
+      } catch (e) {
+        addLog('Key error: ' + e, 'log-warn');
+      }
+    }
+
+    screenStage.addEventListener('keydown', (evt) => {
+      const hid = CODE_TO_HID[evt.code];
+      if (!hid) return;
+      evt.preventDefault();
+      let mod = 0;
+      if (evt.ctrlKey) mod |= 1;
+      if (evt.shiftKey) mod |= 2;
+      if (evt.altKey) mod |= 4;
+      if (evt.metaKey) mod |= 8;
+      sendHidKey(mod, hid, evt.key);
+    });
+
+    screenStage.addEventListener('focus', () => {
+      document.getElementById('focusBanner').textContent = '⌨️ KEYBOARD & MOUSE CAPTURE ACTIVE';
+    });
+    screenStage.addEventListener('blur', () => {
+      document.getElementById('focusBanner').textContent = 'Click screen to capture keyboard & mouse';
+    });
+
+    async function sendPasteText(withEnter) {
+      const input = document.getElementById('pasteInput');
+      const text = input.value;
+      if (!text && !withEnter) return;
+      playPhoenixTone(528, 60);
+      try {
+        if (text) {
+          await fetch('/api/hid/paste', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
+          addLog('Typed text via USB HID: "' + text + '"', 'log-ok');
+        }
+        if (withEnter) {
+          await sendHidKey(0, 40, 'Enter');
+        }
+        input.value = '';
+        setTimeout(refreshFrameNow, 180);
+      } catch (e) {
+        addLog('Paste error: ' + e, 'log-warn');
+      }
+    }
+
+    document.getElementById('pasteInput').addEventListener('keydown', (evt) => {
+      if (evt.key === 'Enter') {
+        evt.preventDefault();
+        sendPasteText(true);
+      }
+    });
+
+    async function sendQuickCommand(cmd) {
+      document.getElementById('pasteInput').value = cmd;
+      await sendPasteText(true);
+    }
+
+    async function triggerPower(kind) {
+      const url = kind === 'reset' ? '/api/vm/reset' : '/api/vm/power/short';
+      try {
+        await fetch(url, { method: 'POST' });
+        addLog('ATX ' + kind + ' triggered (' + url + ')', 'log-warn');
+      } catch (e) {
+        addLog('ATX error: ' + e, 'log-warn');
+      }
+    }
+
+    async function pollVmInfo() {
+      try {
+        const res = await fetch('/api/vm/info');
+        const j = await res.json();
+        if (j && j.data) {
+          document.getElementById('hdrRes').textContent =
+            (j.data.resolution || '1920x1080') + (j.data.hdmi_connected ? ' · HDMI OK' : ' · NO HDMI');
+          document.getElementById('hdrLed').textContent =
+            'PWR: ' + (j.data.power_led ? 'ON' : 'OFF');
+        }
+      } catch (_) {}
+      try {
+        const hRes = await fetch('/api/network/hostname');
+        const hj = await hRes.json();
+        if (hj && hj.data && hj.data.hostname) {
+          document.getElementById('hdrHost').textContent = hj.data.hostname;
+        }
+      } catch (_) {}
+    }
+
+    // Start live loop
+    addLog('AyeKVM Sovereign Console initialized (100% integer / Balanced Ternary)', 'log-ok');
+    pollVmInfo();
+    refreshFrameNow();
+    setInterval(() => {
+      if (videoMode === 'snapshot') refreshFrameNow();
+      if (videoMode === 'mjpeg') analyzeCurrentFrame();
+    }, 400);
+    setInterval(pollVmInfo, 3000);
+  </script>
+</body>
 </html>

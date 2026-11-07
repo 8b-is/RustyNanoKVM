@@ -5,7 +5,7 @@ use tracing::info;
 
 use nanokvm_core::{Config, Result};
 use nanokvm_hid::Hid;
-use nanokvm_vision::VideoCapture;
+use nanokvm_vision::{TernaryVideoAnalyzer, VideoCapture};
 
 use crate::auth::AuthManager;
 
@@ -20,6 +20,8 @@ pub struct AppState {
     pub hid: &'static Hid,
     /// Video capture manager
     pub video: &'static RwLock<VideoCapture>,
+    /// Stateful Balanced Ternary video + PhoeniX `.8a∞` audio context analyzer for MCP
+    pub ternary_analyzer: RwLock<TernaryVideoAnalyzer>,
 }
 
 impl AppState {
@@ -46,6 +48,7 @@ impl AppState {
             auth,
             hid,
             video,
+            ternary_analyzer: RwLock::new(TernaryVideoAnalyzer::new()),
         })
     }
 

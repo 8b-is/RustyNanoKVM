@@ -124,3 +124,39 @@ pub async fn snapshot(
             .unwrap(),
     }
 }
+
+/// Balanced Ternary (`{-1, 0, +1}`, Base-243 packed) video + PhoeniX `.8a∞` audio MCP context handler.
+pub async fn ternary_context(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<StreamParams>,
+) -> impl IntoResponse {
+    let frame_bytes = {
+        let video = state.video.read();
+        video
+            .read_mjpeg(params.width, params.height, params.quality)
+            .map(|f| f.data)
+    };
+
+    match frame_bytes {
+        Ok(bytes) => {
+            let packet = state
+                .ternary_analyzer
+                .write()
+                .analyze_jpeg_frame(&bytes, &[]);
+            let body = serde_json::json!({
+                "code": 0,
+                "data": packet,
+            });
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(body.to_string()))
+                .unwrap()
+        }
+        Err(e) => Response::builder()
+            .status(StatusCode::SERVICE_UNAVAILABLE)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(format!(r#"{{"code": -1, "msg": "{}"}}"#, e)))
+            .unwrap(),
+    }
+}

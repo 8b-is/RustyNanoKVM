@@ -24,20 +24,40 @@ pub struct ImageInfo {
     pub name: String,
     pub size: u64,
     pub path: String,
+    pub crc32: u32,
+    pub fnv64: u64,
 }
 
-/// List ISO images
+/// List ISO images using Smart-Tree × MemNet directory scan
 pub async fn list_images(
     State(_state): State<Arc<AppState>>,
 ) -> (StatusCode, Json<ImageListResponse>) {
-    debug!("Listing images");
+    debug!("Listing images via Smart-Tree MemNet scan");
 
-    // In a real implementation, this would scan the images directory
+    let mut images = Vec::new();
+    for candidate in ["/data/kvm/images", "./images"] {
+        let dir = std::path::Path::new(candidate);
+        if dir.is_dir() {
+            if let Ok(manifest) = nanokvm_core::memnet::scan_smart_tree_directory(dir, 2, 128) {
+                for f in manifest.files {
+                    images.push(ImageInfo {
+                        name: f.rel_path.clone(),
+                        size: f.size_bytes,
+                        path: format!("{}/{}", manifest.host_path, f.rel_path),
+                        crc32: f.crc32,
+                        fnv64: f.fnv64,
+                    });
+                }
+                break;
+            }
+        }
+    }
+
     (
         StatusCode::OK,
         Json(ImageListResponse {
             code: 0,
-            data: vec![],
+            data: images,
         }),
     )
 }

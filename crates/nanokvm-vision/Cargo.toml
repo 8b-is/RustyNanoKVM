@@ -13,6 +13,8 @@ tracing = { workspace = true }
 parking_lot = { workspace = true }
 thiserror = { workspace = true }
 bytes = { workspace = true }
+image = { workspace = true }
+serde = { workspace = true }
 
 [build-dependencies]
 # For FFI bindings to libkvm

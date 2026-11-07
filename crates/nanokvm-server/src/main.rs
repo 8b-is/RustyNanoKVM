@@ -4,9 +4,15 @@
 
 use std::sync::Arc;
 
-use axum::Router;
+use axum::{Router, response::Html, routing::get};
 use tokio::signal;
 use tracing::{error, info};
+
+const SOVEREIGN_CONSOLE_HTML: &str = include_str!("../../../web/index.html");
+
+async fn sovereign_console_page() -> Html<&'static str> {
+    Html(SOVEREIGN_CONSOLE_HTML)
+}
 
 mod api;
 mod auth;
@@ -101,6 +107,8 @@ fn create_router(state: Arc<AppState>) -> Router {
     let static_files = ServeDir::new("web").not_found_service(ServeDir::new("web/index.html"));
 
     Router::new()
+        .route("/", get(sovereign_console_page))
+        .route("/console", get(sovereign_console_page))
         .nest("/api", api::router(state.clone()))
         .nest(
             "/ws",

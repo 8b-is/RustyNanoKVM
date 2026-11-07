@@ -3,6 +3,7 @@
 pub mod application;
 pub mod auth;
 pub mod hid;
+pub mod memnet;
 pub mod network;
 pub mod storage;
 pub mod stream;
@@ -43,6 +44,14 @@ pub fn router(state: Arc<AppState>) -> Router<Arc<AppState>> {
         // Stream routes
         .route("/stream/mjpeg", get(stream::mjpeg))
         .route("/stream/snapshot", get(stream::snapshot))
+        .route("/stream/ternary", get(stream::ternary_context))
+        .route("/mcp/context", get(stream::ternary_context))
+        // MemNet & Smart-Tree routes
+        .route("/memnet/capsule", get(memnet::get_capsule))
+        .route("/memnet/tree", get(memnet::get_tree))
+        .route("/memnet/read", get(memnet::read_file))
+        .route("/memnet/search", get(memnet::search_files))
+        .route("/memnet/broadcast", post(memnet::broadcast_capsule))
         // Storage routes
         .route("/storage/images", get(storage::list_images))
         .route("/storage/upload", post(storage::upload))

@@ -10,6 +10,10 @@ description = "NanoKVM Server - HTTP/WebSocket API server"
 name = "nanokvm-server"
 path = "src/main.rs"
 
+[[bin]]
+name = "nanokvm-mcp"
+path = "src/bin/nanokvm-mcp.rs"
+
 [dependencies]
 nanokvm-core = { path = "../nanokvm-core" }
 nanokvm-hid = { path = "../nanokvm-hid" }
