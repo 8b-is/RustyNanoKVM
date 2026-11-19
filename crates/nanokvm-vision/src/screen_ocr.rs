@@ -554,6 +554,8 @@ pub fn match_glyph_ascii(cell: &[u8; 120], col: usize) -> char {
         }
         t_idx += 1;
     }
+    // Reject cells unlike the calibrated console font (mean squared error > 4).
+    if best_dist > 120 * 4 { return '?'; }
     best_ascii as char
 }
 
@@ -620,5 +622,30 @@ impl LlmScreenTranscriptBuffer {
         }
         self.last_lines = lines.to_vec();
         self.rolling_log.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_flat_bright_surfaces() {
+        assert_eq!(match_glyph_ascii(&[15; 120], 0), '?');
+        let image = RgbImage::from_pixel(1920, 1080, image::Rgb([240, 240, 240]));
+        let lines = transcribe_rgb_console_80x25(&image);
+        assert!(lines.iter().all(|line| line.chars().all(|c| c == '?')));
+    }
+
+    #[test]
+    fn calibrated_glyphs_still_match() {
+        for template in &GLYPH_TEMPLATES {
+            let mut cell = [0u8; 120];
+            for (i, packed) in template.packed_nibbles.iter().enumerate() {
+                cell[2 * i] = packed >> 4;
+                cell[2 * i + 1] = packed & 15;
+            }
+            assert_eq!(match_glyph_ascii(&cell, usize::from(template.phase)), char::from(template.ascii));
+        }
     }
 }
