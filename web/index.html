@@ -368,7 +368,7 @@
 
       <div class="panel" style="background:#070a12;border-color:#1e293b;margin-top:4px;">
         <div class="panel-header">
-          <span class="panel-title">🧠 LIVE LLM SCREEN TRANSCRIPTION BUFFER (80×25 HARDWARE OCR · 0 FLOATS)</span>
+          <span class="panel-title">🧠 LIVE LLM SCREEN TRANSCRIPTION BUFFER (CALIBRATED CONSOLE OCR)</span>
           <div style="display:flex;gap:6px;align-items:center;">
             <span class="badge badge-cyan" id="ocrStats">lines: 0 | buf: 0</span>
             <button style="padding:2px 8px;font-size:10px;" onclick="copyLlmBuffer()">📋 Copy LLM Prompt</button>
@@ -654,6 +654,13 @@
 
     // Pure-integer 80x25 HDMI Console Screen Text Transcriber (4-bit L2 squared distance)
     function transcribeConsole80x25(semClass, salPq, activeCells) {
+      if (semClass === 'graphical_desktop_or_video' || semClass === 'blank_or_sleeping_display') {
+        prevTranscribedSet = new Set();
+        lastLlmPromptDigest = '[OCR unavailable for this frame: the console decoder requires its calibrated BIOS font and grid. A vision OCR model is needed for desktop text.]';
+        document.getElementById('llmScreenTranscript').textContent = lastLlmPromptDigest;
+        document.getElementById('ocrStats').textContent = 'desktop OCR unavailable';
+        return;
+      }
       ocrCtx.drawImage(kvmScreenImg, 0, 0, 1920, 1080);
       const rgba = ocrCtx.getImageData(0, 0, 1920, 1080).data;
       const cellRaw = new Int32Array(120);
@@ -711,7 +718,7 @@
               bestCode = tpl.code;
             }
           }
-          rowChars += String.fromCharCode(bestCode);
+          rowChars += bestDist <= 120 * 4 ? String.fromCharCode(bestCode) : '?';
         }
 
         const trimmedRight = rowChars.replace(/\s+$/, '');

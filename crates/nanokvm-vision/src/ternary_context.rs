@@ -537,6 +537,11 @@ impl TernaryVideoAnalyzer {
             (ScreenSemanticClass::GraphicalDesktopOrVideo, 864i64)
         };
 
+        // The calibrated console matcher cannot recognize arbitrary desktop fonts.
+        if matches!(semantic_class, ScreenSemanticClass::GraphicalDesktopOrVideo | ScreenSemanticClass::BlankOrSleepingDisplay) {
+            transcribed_lines.clear();
+        }
+
         // Relational salience in exact p/q (/1024): combines spatial glyph density + temporal motion
         let raw_salience = ((active_glyph_cells as i64) * 12 + (temporal_changed_cells as i64) * 24 + 256)
             .clamp(64, 1024);
@@ -600,6 +605,17 @@ impl TernaryVideoAnalyzer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn graphical_screen_does_not_emit_console_text() {
+        let rgb = image::RgbImage::from_pixel(640, 480, image::Rgb([240, 240, 240]));
+        let mut encoded = std::io::Cursor::new(Vec::new());
+        rgb.write_to(&mut encoded, image::ImageFormat::Png).unwrap();
+        let packet = TernaryVideoAnalyzer::new().analyze_jpeg_frame(encoded.get_ref(), &[]);
+        assert!(matches!(packet.semantic_class, ScreenSemanticClass::GraphicalDesktopOrVideo));
+        assert!(packet.transcribed_lines.is_empty());
+        assert!(packet.llm_context_buffer.is_empty());
+    }
 
     #[test]
     fn base243_five_trits_roundtrip_exhaustively() {
